@@ -72,6 +72,10 @@ body.faction .nd.fv rect{stroke:#1f5c33;fill:#dfe8d4}
 .ctrl{position:absolute;right:.6rem;bottom:.7rem;display:flex;flex-direction:column;gap:.35rem;z-index:3}
 .ctrl button{width:2.4rem;height:2.4rem;border-radius:50%;background:var(--card);border:1px solid var(--ligne);
   box-shadow:0 2px 6px var(--ombre);display:grid;place-items:center;font-size:1.05rem}
+#aide{position:absolute;left:50%;top:3.2rem;transform:translateX(-50%);z-index:6;max-width:82vw;
+  background:var(--enc);color:var(--pap);border-radius:10px;padding:.6rem .85rem;font-size:.82rem;
+  box-shadow:0 4px 14px var(--ombre);text-align:center;line-height:1.4;transition:opacity .4s}
+#aide.parti{opacity:0;pointer-events:none}
 .legende{position:absolute;left:.6rem;bottom:.7rem;z-index:3;background:var(--card);border:1px solid var(--ligne);
   border-radius:6px;padding:.4rem .55rem;font-size:.68rem;color:var(--enc2);box-shadow:0 2px 6px var(--ombre);max-width:52vw}
 .legende b{color:var(--enc);font-weight:600}
@@ -194,7 +198,7 @@ select{font:inherit;font-size:.85rem;padding:.4rem;border:1px solid var(--ligne)
    n:nom  e:épithète  s:sexe  b:naissance  d:mort  r:rangée dans l'arbre
    h:maison  k:[n° de roi, règne]  dr:dragon  f:camp pendant la Danse
    ====================================================================== */
-const VERSION_APP = "2026.08.17-1";
+const VERSION_APP = "2026.08.17-2";
 const GENS = [
 ["aerion",{n:"Aerion Targaryen",t:"Seigneur de Peyredragon",s:"m",b:null,d:null,r:0,h:"Targaryen",
   bio:"Seigneur de Peyredragon avant la Conquête. Père d'Aegon, de Visenya et de Rhaenys, il mourut sans jamais avoir régné sur autre chose que son rocher."}],
@@ -804,13 +808,10 @@ function reglages(){
   if(bm) bm.onclick = async ()=>{
     const e = document.getElementById('maj-etat');
     e.textContent = "Recherche…";
-    try{
-      const r = await fetch('index.html?v='+Date.now(), {cache:'no-store'});
-      const t = await r.text();
-      const m = t.match(/VERSION_APP\s*=\s*"([^"]+)"/);
-      if(m && m[1] !== VERSION_APP){ e.textContent = "Nouvelle version, rechargement…"; setTimeout(()=>location.reload(true), 600); }
-      else e.textContent = "Tu as déjà la dernière version.";
-    }catch(err){ e.textContent = "Hors ligne — impossible de vérifier."; }
+    const v = await versionEnLigne();
+    if(v === null) e.textContent = "Hors ligne — impossible de vérifier.";
+    else if(v !== VERSION_APP){ e.textContent = "Nouvelle version, rechargement…"; setTimeout(()=>location.reload(), 600); }
+    else e.textContent = "Tu as déjà la dernière version.";
   };
   document.getElementById('s-limite').onchange = e=>{
     S.limite = +e.target.value; localStorage.setItem('tg-limite', S.limite);
@@ -859,11 +860,39 @@ document.documentElement.dataset.theme = S.theme;
 document.documentElement.style.setProperty('--fs', S.fs);
 document.querySelector('meta[name=theme-color]').content = S.theme==='nuit'?'#12100e':'#e6d9be';
 barre(); legende(); dessine(); listes(); chrono(); reglages();
+
+/* bulle d'aide au tout premier lancement */
+if(!localStorage.getItem('tg-vu')){
+  const a = document.createElement('div');
+  a.id = 'aide';
+  a.innerHTML = "Glisse pour te promener dans l'arbre, pince pour zoomer.<br>Touche un nom : sa fiche s'ouvre et sa lignée s'éclaire.";
+  document.getElementById('v-arbre').appendChild(a);
+  const partir = ()=>{ a.classList.add('parti'); localStorage.setItem('tg-vu','1'); setTimeout(()=>a.remove(),500); };
+  a.onclick = partir;
+  zone.addEventListener('pointerdown', partir, {once:true});
+  setTimeout(partir, 9000);
+}
 addEventListener('resize', ()=>ajuste());
 ajuste();
 /* ---- mise à jour automatique ----
-   Le service worker va chercher la dernière version sur le réseau à chaque ouverture.
-   Dès qu'une nouvelle version prend la main, la page se recharge toute seule. */
+   Deux filets : le service worker (network-first, se recharge quand une nouvelle version
+   prend la main) et une comparaison directe de VERSION_APP avec le fichier en ligne,
+   qui attrape aussi les mises à jour où seul index.html a changé. */
+async function versionEnLigne(){
+  try{
+    const r = await fetch('index.html?v=' + Date.now(), {cache:'no-store'});
+    const m = (await r.text()).match(/VERSION_APP\s*=\s*"([^"]+)"/);
+    return m ? m[1] : null;
+  }catch(e){ return null; }
+}
+async function majAuto(){
+  if(sessionStorage.getItem('tg-maj')) return;      // une seule relance par session, jamais de boucle
+  const v = await versionEnLigne();
+  if(v && v !== VERSION_APP){ sessionStorage.setItem('tg-maj','1'); location.reload(); }
+}
+setTimeout(majAuto, 2500);
+addEventListener('visibilitychange', ()=>{ if(!document.hidden) majAuto(); });
+
 if('serviceWorker' in navigator){
   let recharge = false;
   navigator.serviceWorker.addEventListener('controllerchange', ()=>{
