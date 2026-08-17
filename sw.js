@@ -4,9 +4,10 @@
    Attention : GitHub Pages sert les fichiers avec Cache-Control: max-age=600. Un simple
    fetch() peut donc répondre depuis le cache HTTP du navigateur et servir une version
    vieille de dix minutes. Pour les fichiers de l'app on contourne ce cache explicitement. */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'targaryen-' + VERSION;
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
+               './carte-westeros.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
