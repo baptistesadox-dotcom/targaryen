@@ -198,7 +198,7 @@ select{font:inherit;font-size:.85rem;padding:.4rem;border:1px solid var(--ligne)
    n:nom  e:épithète  s:sexe  b:naissance  d:mort  r:rangée dans l'arbre
    h:maison  k:[n° de roi, règne]  dr:dragon  f:camp pendant la Danse
    ====================================================================== */
-const VERSION_APP = "2026.08.17-3";
+const VERSION_APP = "2026.08.17-4";
 const GENS = [
 ["aerion",{n:"Aerion Targaryen",t:"Seigneur de Peyredragon",s:"m",b:null,d:null,r:0,h:"Targaryen",
   bio:"Seigneur de Peyredragon avant la Conquête. Père d'Aegon, de Visenya et de Rhaenys, il mourut sans jamais avoir régné sur autre chose que son rocher."}],
@@ -465,6 +465,8 @@ const visible = p => p.b==null || p.b <= S.limite;     // pas encore né = pas e
 const spoiled = p => p.d!=null && p.d > S.limite;      // sa fin (et sa fiche) est à venir
 const prenom = p => p.n.split(' ')[0];
 const nomCourt = p => prenom(p) + (p.k && p.k[0] ? " "+p.k[0] : "");
+// « Aegon Targaryen » → « Aegon II Targaryen » : trois Aegon règnent dans le livre
+const nomComplet = p => p.k && p.k[0] ? p.n.replace(prenom(p), prenom(p)+" "+p.k[0]) : p.n;
 
 /* index des relations */
 const rel = {};
@@ -710,7 +712,7 @@ function ouvre(id){
   };
   feuille.innerHTML = `
     <div class="poignee"></div>
-    <div class="fh"><h2>${p.n}</h2><button class="x" id="x-fiche">✕</button></div>
+    <div class="fh"><h2>${nomComplet(p)}</h2><button class="x" id="x-fiche">✕</button></div>
     ${p.e?`<div class="epi">« ${p.e} »</div>`:""}
     <div style="font-size:.9rem;color:var(--enc2)">${p.b!=null?"Né"+(p.s==='f'?"e":"")+" en "+an(p.b):"Dates inconnues"}${
       p.d!=null && !cache ? " · mort"+(p.s==='f'?"e":"")+" en "+an(p.d)+(p.b!=null&&p.b>=0?` (${p.d-p.b} ans)`:"") : ""}</div>
@@ -758,7 +760,7 @@ function listes(){
     return `<div class="sect">${k==="—"?"Autres":"Maison "+k} · ${l.length}</div>` + l.map(p=>`
       <button class="ligne" data-go="${p.id}">
         <span class="av${p.k?' roi':''}">${p.k?'♛':(p.dr?'🜂':(p.s==='f'?'♀':'♂'))}</span>
-        <span class="t"><b>${p.n}</b><span>${p.e?'« '+p.e+' »':(p.dr?(p.s==='f'?'Cavalière de ':'Cavalier de ')+p.dr:(p.k?(p.s==='f'?'Reine':'Roi'):''))}</span></span>
+        <span class="t"><b>${nomComplet(p)}</b><span>${p.e?'« '+p.e+' »':(p.dr?(p.s==='f'?'Cavalière de ':'Cavalier de ')+p.dr:(p.k?(p.s==='f'?'Reine':'Roi'):''))}</span></span>
         <span class="an">${dates(p)}</span>
       </button>`).join('');
   }).join('') || `<p style="color:var(--enc2)">Personne de ce nom.</p>`;
