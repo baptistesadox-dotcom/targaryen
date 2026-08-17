@@ -1,0 +1,881 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1a120b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Lignée Targaryen</title>
+<style>
+:root{
+  --pap:#f0e6d2; --pap2:#e6d9be; --card:#f7efdf; --enc:#2b2117; --enc2:#6d5c46;
+  --or:#9a6b1f; --rouge:#8c1c13; --ligne:#a8967a; --ombre:rgba(60,42,20,.18);
+  --fs:1;
+}
+[data-theme=nuit]{
+  --pap:#12100e; --pap2:#1a1613; --card:#1f1a15; --enc:#ece2d0; --enc2:#a2907a;
+  --or:#c9a227; --rouge:#c1352a; --ligne:#5a4c3b; --ombre:rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:var(--pap); color:var(--enc);
+  font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  font-size:calc(16px * var(--fs)); line-height:1.45;
+  -webkit-text-size-adjust:100%;
+}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+
+/* ---------- structure ---------- */
+#app{display:flex;flex-direction:column;height:100%}
+header{
+  display:flex;align-items:center;gap:.5rem;padding:.55rem .7rem;
+  padding-top:calc(.55rem + env(safe-area-inset-top));
+  background:var(--pap2);border-bottom:1px solid var(--ligne);z-index:5;
+}
+header h1{font-size:1.05rem;margin:0;flex:1;font-weight:600;letter-spacing:.02em}
+header h1 small{display:block;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--enc2);font-weight:400}
+.iconbtn{width:2.1rem;height:2.1rem;border-radius:50%;display:grid;place-items:center;font-size:1.1rem;border:1px solid transparent}
+.iconbtn:active{background:var(--ombre)}
+main{flex:1;position:relative;overflow:hidden}
+.vue{position:absolute;inset:0;overflow:auto;display:none;-webkit-overflow-scrolling:touch}
+.vue.on{display:block}
+nav{
+  display:flex;background:var(--pap2);border-top:1px solid var(--ligne);
+  padding-bottom:env(safe-area-inset-bottom);z-index:5;
+}
+nav button{flex:1;padding:.45rem 0 .5rem;display:flex;flex-direction:column;align-items:center;gap:.12rem;color:var(--enc2);font-size:.66rem;letter-spacing:.06em}
+nav button i{font-style:normal;font-size:1.15rem;line-height:1}
+nav button.on{color:var(--rouge)}
+
+/* ---------- arbre ---------- */
+#zone{position:absolute;inset:0;overflow:hidden;touch-action:none;background:
+  radial-gradient(120% 90% at 50% 0%, var(--pap) 40%, var(--pap2) 100%)}
+#pan{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+#svg{display:block}
+.lien{fill:none;stroke:var(--ligne);stroke-width:1.6}
+.lien.mar{stroke:var(--enc2);stroke-width:1.8}
+.lien.hi{stroke:var(--rouge);stroke-width:2.6}
+.nd rect{fill:var(--card);stroke:var(--ligne);stroke-width:1.4;rx:5}
+.nd .nm{font-size:13px;font-weight:600;fill:var(--enc)}
+.nd .an{font-size:9.5px;fill:var(--enc2);letter-spacing:.03em}
+.nd .hs{font-size:8.5px;fill:var(--enc2);letter-spacing:.08em;text-transform:uppercase}
+.nd.roi rect{stroke:var(--or);stroke-width:2.2;fill:var(--card)}
+.nd.sel rect{stroke:var(--rouge);stroke-width:2.8}
+.nd.dim{opacity:.28}
+.nd.match rect{fill:#f6e2a8}
+[data-theme=nuit] .nd.match rect{fill:#3a2f16}
+.nd .cr{font-size:11px}
+.nd .dg{font-size:8.5px;fill:var(--rouge)}
+body.faction .nd.fn rect{stroke:#1c1c1c;fill:#d9cdb4}
+body.faction .nd.fv rect{stroke:#1f5c33;fill:#dfe8d4}
+[data-theme=nuit] body.faction .nd.fn rect{fill:#26221c;stroke:#8d8d8d}
+[data-theme=nuit] body.faction .nd.fv rect{fill:#1b2a1e;stroke:#4e9a68}
+.ctrl{position:absolute;right:.6rem;bottom:.7rem;display:flex;flex-direction:column;gap:.35rem;z-index:3}
+.ctrl button{width:2.4rem;height:2.4rem;border-radius:50%;background:var(--card);border:1px solid var(--ligne);
+  box-shadow:0 2px 6px var(--ombre);display:grid;place-items:center;font-size:1.05rem}
+.legende{position:absolute;left:.6rem;bottom:.7rem;z-index:3;background:var(--card);border:1px solid var(--ligne);
+  border-radius:6px;padding:.4rem .55rem;font-size:.68rem;color:var(--enc2);box-shadow:0 2px 6px var(--ombre);max-width:52vw}
+.legende b{color:var(--enc);font-weight:600}
+.barre{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;gap:.35rem;padding:.4rem .5rem;
+  background:linear-gradient(var(--pap2),transparent);overflow-x:auto;scrollbar-width:none}
+.barre::-webkit-scrollbar{display:none}
+.puce{white-space:nowrap;border:1px solid var(--ligne);background:var(--card);border-radius:999px;
+  padding:.22rem .6rem;font-size:.72rem;color:var(--enc2)}
+.puce.on{background:var(--enc);color:var(--pap);border-color:var(--enc)}
+
+/* ---------- listes ---------- */
+.wrap{padding:.6rem .8rem 4rem}
+.chercher{position:sticky;top:0;background:var(--pap);padding:.5rem 0 .55rem;z-index:2}
+.chercher input{width:100%;padding:.55rem .75rem;border:1px solid var(--ligne);border-radius:8px;
+  background:var(--card);color:var(--enc);font:inherit;font-size:.95rem}
+.sect{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--enc2);
+  margin:1.1rem 0 .4rem;border-bottom:1px solid var(--ligne);padding-bottom:.2rem}
+.ligne{display:flex;align-items:center;gap:.6rem;padding:.5rem .2rem;border-bottom:1px solid var(--ombre);width:100%;text-align:left}
+.ligne .av{width:2rem;height:2rem;flex:none;border-radius:50%;display:grid;place-items:center;
+  border:1px solid var(--ligne);background:var(--pap2);font-size:.8rem}
+.ligne .av.roi{border-color:var(--or);color:var(--or)}
+.ligne .t{flex:1;min-width:0}
+.ligne .t b{font-weight:600;display:block}
+.ligne .t span{font-size:.75rem;color:var(--enc2);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ligne .an{font-size:.72rem;color:var(--enc2);flex:none;font-variant-numeric:tabular-nums}
+
+/* ---------- chronologie ---------- */
+.chrono{position:relative;padding-left:1.5rem;margin-top:.6rem}
+.chrono:before{content:"";position:absolute;left:.42rem;top:.3rem;bottom:.3rem;width:2px;background:var(--ligne)}
+.ev{position:relative;padding:.45rem 0 .55rem}
+.ev:before{content:"";position:absolute;left:-1.35rem;top:.8rem;width:.6rem;height:.6rem;border-radius:50%;
+  background:var(--pap);border:2px solid var(--ligne)}
+.ev.roi:before{border-color:var(--or);background:var(--or)}
+.ev .y{font-size:.72rem;letter-spacing:.1em;color:var(--rouge);font-variant-numeric:tabular-nums}
+.ev .d{font-size:.9rem}
+.ev b{font-weight:600}
+
+/* ---------- fiche ---------- */
+#fiche{position:fixed;inset:0;z-index:20;display:none}
+#fiche.on{display:block}
+.voile{position:absolute;inset:0;background:rgba(20,14,6,.45)}
+.feuille{position:absolute;left:0;right:0;bottom:0;max-height:92%;overflow:auto;background:var(--card);
+  border-top-left-radius:14px;border-top-right-radius:14px;box-shadow:0 -6px 24px var(--ombre);
+  padding:.2rem 1rem calc(1.4rem + env(safe-area-inset-bottom));animation:mont .22s ease-out}
+@keyframes mont{from{transform:translateY(18px);opacity:.4}to{transform:none;opacity:1}}
+.poignee{width:2.4rem;height:.25rem;border-radius:99px;background:var(--ligne);margin:.5rem auto .7rem}
+.fh{display:flex;align-items:flex-start;gap:.6rem}
+.fh h2{margin:0;font-size:1.35rem;font-weight:600;line-height:1.2;flex:1}
+.fh .x{font-size:1.3rem;color:var(--enc2)}
+.epi{color:var(--rouge);font-style:italic;font-size:.95rem;margin:.1rem 0 .5rem}
+.meta{display:flex;flex-wrap:wrap;gap:.3rem;margin:.5rem 0 .7rem}
+.tag{font-size:.72rem;border:1px solid var(--ligne);border-radius:999px;padding:.15rem .55rem;color:var(--enc2)}
+.tag.or{border-color:var(--or);color:var(--or)}
+.tag.dg{border-color:var(--rouge);color:var(--rouge)}
+.bio{font-size:.95rem;margin:.2rem 0 .9rem}
+.masque{background:var(--pap2);border:1px dashed var(--ligne);border-radius:8px;padding:.6rem;text-align:center;color:var(--enc2);font-size:.85rem}
+.masque button{color:var(--rouge);text-decoration:underline;margin-top:.3rem}
+.rel h4{margin:.9rem 0 .35rem;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--enc2);font-weight:400}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{border:1px solid var(--ligne);background:var(--pap2);border-radius:999px;padding:.25rem .6rem;font-size:.82rem;text-align:left}
+.chip small{color:var(--enc2);font-size:.72rem}
+.chip.roi{border-color:var(--or)}
+.act{display:flex;gap:.5rem;margin-top:1rem}
+.act button{flex:1;padding:.6rem;border:1px solid var(--enc);border-radius:8px;font-size:.85rem;background:var(--enc);color:var(--pap)}
+.act button.sec{background:none;color:var(--enc)}
+
+/* ---------- réglages ---------- */
+.opt{display:flex;align-items:center;gap:.6rem;padding:.7rem 0;border-bottom:1px solid var(--ombre)}
+.opt .t{flex:1}
+.opt .t b{display:block;font-weight:600}
+.opt .t span{font-size:.78rem;color:var(--enc2)}
+.seg{display:flex;border:1px solid var(--ligne);border-radius:8px;overflow:hidden}
+.seg button{padding:.35rem .7rem;font-size:.8rem;color:var(--enc2)}
+.seg button.on{background:var(--enc);color:var(--pap)}
+select{font:inherit;font-size:.85rem;padding:.4rem;border:1px solid var(--ligne);border-radius:8px;background:var(--card);color:var(--enc)}
+.note{font-size:.8rem;color:var(--enc2);margin-top:1rem;line-height:1.5}
+</style>
+
+<div id="app">
+  <header>
+    <h1>Lignée Targaryen<small>Feu &amp; Sang · 1 – 136 ap. C.</small></h1>
+    <button class="iconbtn" id="btn-cherche" aria-label="Rechercher">⌕</button>
+  </header>
+
+  <main>
+    <section class="vue on" id="v-arbre">
+      <div id="zone"><div id="pan"><svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+      <div class="barre" id="barre"></div>
+      <div class="legende" id="legende"></div>
+      <div class="ctrl">
+        <button id="z-plus">+</button>
+        <button id="z-moins">−</button>
+        <button id="z-fit" aria-label="Tout voir">⤢</button>
+      </div>
+    </section>
+
+    <section class="vue" id="v-liste"><div class="wrap">
+      <div class="chercher"><input id="q" type="search" placeholder="Chercher un nom…" autocomplete="off"></div>
+      <div id="liste"></div>
+    </div></section>
+
+    <section class="vue" id="v-rois"><div class="wrap" id="rois"></div></section>
+
+    <section class="vue" id="v-reglages"><div class="wrap" id="reglages"></div></section>
+  </main>
+
+  <nav>
+    <button class="on" data-v="arbre"><i>⛬</i>Arbre</button>
+    <button data-v="liste"><i>☰</i>Personnes</button>
+    <button data-v="rois"><i>♛</i>Chronologie</button>
+    <button data-v="reglages"><i>⚙</i>Réglages</button>
+  </nav>
+</div>
+
+<div id="fiche"><div class="voile"></div><div class="feuille" id="feuille"></div></div>
+
+<script>
+/* ======================================================================
+   DONNÉES — Feu & Sang, de la Conquête d'Aegon à l'avènement d'Aegon III
+   n:nom  e:épithète  s:sexe  b:naissance  d:mort  r:rangée dans l'arbre
+   h:maison  k:[n° de roi, règne]  dr:dragon  f:camp pendant la Danse
+   ====================================================================== */
+const VERSION_APP = "2026.08.17-1";
+const GENS = [
+["aerion",{n:"Aerion Targaryen",t:"Seigneur de Peyredragon",s:"m",b:null,d:null,r:0,h:"Targaryen",
+  bio:"Seigneur de Peyredragon avant la Conquête. Père d'Aegon, de Visenya et de Rhaenys, il mourut sans jamais avoir régné sur autre chose que son rocher."}],
+["valaena",{n:"Valaena Velaryon",s:"f",b:null,d:null,r:0,h:"Velaryon",
+  bio:"Épouse d'Aerion, de sang valyrien par sa mère. Mère des trois conquérants."}],
+
+["visenya",{n:"Visenya Targaryen",e:"la Reine guerrière",s:"f",b:-28,d:44,r:1,h:"Targaryen",dr:"Vhagar",
+  bio:"Sœur aînée et première épouse d'Aegon. Guerrière, elle portait Sombresœur et fonda la Garde Royale. Mère de Maegor, elle fut soupçonnée de sorcellerie et se retira à Peyredragon."}],
+["aegon-i",{n:"Aegon Targaryen",e:"le Conquérant",s:"m",b:-27,d:37,r:1,h:"Targaryen",dr:"Balerion",k:["Ier","1 – 37","1er"],
+  bio:"Le Dragon. Avec ses deux sœurs-épouses et trois dragons, il soumit six des sept royaumes en deux ans, fondit le Trône de Fer et bâtit Port-Réal. Mort d'apoplexie à Peyredragon."}],
+["rhaenys",{n:"Rhaenys Targaryen",s:"f",b:-25,d:10,r:1,h:"Targaryen",dr:"Meraxes",
+  bio:"La plus jeune sœur d'Aegon, sa favorite : rieuse, protectrice des chanteurs. Elle mourut en Dorne quand un carreau de scorpion creva l'œil de Meraxes au-dessus de Lancehélion."}],
+
+["maegor-i",{n:"Maegor Targaryen",e:"le Cruel",s:"m",b:12,d:48,r:2,h:"Targaryen",dr:"Balerion",k:["Ier","42 – 48","3e"],
+  bio:"Fils d'Aegon et de Visenya. Il prit la couronne sur son neveu, écrasa la Foi Militante et prit six épouses sans jamais obtenir d'héritier vivant. On le trouva mort sur le Trône de Fer, transpercé par ses propres lames."}],
+["aenys-i",{n:"Aenys Targaryen",s:"m",b:7,d:42,r:2,h:"Targaryen",dr:"Vif-Argent",k:["Ier","37 – 42","2e"],
+  bio:"Fils d'Aegon et de Rhaenys. Doux, indécis, aimable — et incapable de tenir un royaume : sa faiblesse déchaîna le soulèvement de la Foi. Il mourut à Peyredragon, peut-être empoisonné."}],
+["alyssa-vel",{n:"Alyssa Velaryon",s:"f",b:22,d:54,r:2,h:"Velaryon",
+  bio:"Reine d'Aenys, elle sauva ses enfants de Maegor puis épousa Rogar Baratheon et fit couronner son fils Jaehaerys. Morte en couches en 54."}],
+["rogar",{n:"Rogar Baratheon",s:"m",b:null,d:61,r:2,h:"Baratheon",
+  bio:"Sire d'Accalmie, second époux d'Alyssa, Main du Roi et régent du jeune Jaehaerys. Son ambition — écarter Alysanne du trône — brisa sa fortune."}],
+
+["rhaena",{n:"Rhaena Targaryen",s:"f",b:23,d:73,r:3,h:"Targaryen",dr:"Rêvefeu",
+  bio:"Fille aînée d'Aenys. Épouse de son frère Aegon, puis, contrainte, de son oncle Maegor. Veuve deux fois, elle vécut à Belle-Île puis à Harrenhal, entourée de ses amies, et refusa toujours de se remarier."}],
+["aegon-unc",{n:"Aegon Targaryen",e:"le Non-couronné",s:"m",b:24,d:43,r:3,h:"Targaryen",dr:"Vif-Argent",
+  bio:"Fils aîné d'Aenys, héritier légitime. Il défia Maegor au-dessus de l'Œil-des-Dieux : Vif-Argent ne fit pas le poids contre Balerion."}],
+["viserys-aenys",{n:"Viserys Targaryen",s:"m",b:29,d:48,r:3,h:"Targaryen",
+  bio:"Deuxième fils d'Aenys, gardé en otage par Maegor comme écuyer. Interrogé sans relâche sur la fuite de ses proches, il mourut de mauvais traitements à dix-neuf ans."}],
+["jaehaerys-i",{n:"Jaehaerys Targaryen",e:"le Conciliateur",s:"m",b:34,d:103,r:3,h:"Targaryen",dr:"Vermithor",k:["Ier","48 – 103","4e"],
+  bio:"Le Vieux Roi. Cinquante-cinq ans de règne : paix avec la Foi, routes, Mur, code de lois, prospérité. Il perdit presque tous ses enfants avant lui et dut faire trancher sa succession par un Grand Conseil."}],
+["alysanne",{n:"Alysanne Targaryen",e:"la Bonne Reine",s:"f",b:36,d:100,r:3,h:"Targaryen",dr:"Aile-d'Argent",
+  bio:"Sœur-épouse de Jaehaerys, aimée du peuple. Elle abolit le droit de cuissage, dota le Mur du Neuf-Sentinelles, tint ses cours de femmes — et se brouilla gravement avec le roi sur le sort de leurs filles."}],
+["vaella",{n:"Vaella Targaryen",s:"f",b:37,d:37,r:3,h:"Targaryen",bio:"Dernière fille d'Aenys, morte au berceau."}],
+["jocelyn",{n:"Jocelyn Baratheon",s:"f",b:50,d:null,r:4,h:"Baratheon",
+  bio:"Fille d'Alyssa et de Rogar, demi-sœur de Jaehaerys. Grande, brune, elle épousa le prince Aemon et lui donna Rhaenys."}],
+["boremund",{n:"Boremund Baratheon",s:"m",b:54,d:129,r:3,h:"Baratheon",f:"n",
+  bio:"Né de la mort de sa mère Alyssa. Sire d'Accalmie, il défendit haut et fort le droit de Rhaenys puis de Rhaenyra."}],
+
+["aerea",{n:"Aerea Targaryen",s:"f",b:43,d:56,r:4,h:"Targaryen",dr:"Balerion",
+  bio:"Fille de Rhaena, un temps héritière de Maegor. Enfant rebelle, elle vola Balerion et disparut plus d'un an ; elle revint brûlante et mourut atrocement à Port-Réal — l'un des plus sombres mystères du livre."}],
+["rhaella",{n:"Rhaella Targaryen",s:"f",b:43,d:null,r:4,h:"Targaryen",
+  bio:"Sœur jumelle d'Aerea, confiée à la Foi et devenue septa à Villevieille."}],
+
+["aegon-52",{n:"Aegon Targaryen",s:"m",b:52,d:52,r:4,h:"Targaryen",bio:"Premier-né de Jaehaerys et d'Alysanne, mort au berceau."}],
+["daenerys-55",{n:"Daenerys Targaryen",s:"f",b:55,d:60,r:4,h:"Targaryen",
+  bio:"Enfant vive et adorée, emportée à quatre ans par le Frisson qui ravagea Port-Réal."}],
+["aemon-p",{n:"Aemon Targaryen",s:"m",b:55,d:92,r:4,h:"Targaryen",dr:"Caraxès",
+  bio:"Fils aîné survivant, prince de Peyredragon et héritier. Un carreau d'arbalète le tua à Belle-Île, ouvrant la question de succession qui empoisonnera la dynastie."}],
+["baelon",{n:"Baelon Targaryen",e:"le Brave",s:"m",b:57,d:101,r:4,h:"Targaryen",dr:"Vhagar",
+  bio:"Frère cadet d'Aemon, nommé héritier à sa place au détriment de Rhaenys — précédent lourd de conséquences. Il mourut d'un ventre éclaté que les mestres ne surent ouvrir."}],
+["alyssa-t",{n:"Alyssa Targaryen",s:"f",b:60,d:84,r:4,h:"Targaryen",dr:"Meleys",
+  bio:"Garçon manqué, moqueuse et casse-cou, elle adorait son frère Baelon qu'elle épousa. Morte à vingt-quatre ans des suites de son troisième accouchement."}],
+["maegelle",{n:"Maegelle Targaryen",s:"f",b:62,d:84,r:4,h:"Targaryen",
+  bio:"Donnée à la Foi à sept ans, septa et guérisseuse. Elle mourut de la léprose contractée auprès de ceux qu'elle soignait."}],
+["vaegon",{n:"Vaegon Targaryen",e:"le Dragon sans dragon",s:"m",b:63,d:null,r:4,h:"Targaryen",
+  bio:"Froid, livresque, sans goût pour la cour : envoyé à la Citadelle, il y devint archimestre à l'anneau, la verge et le masque d'or."}],
+["daella",{n:"Daella Targaryen",s:"f",b:64,d:82,r:4,h:"Targaryen",
+  bio:"Craintive et douce, terrorisée à l'idée du mariage. Elle épousa Rodrik Arryn et mourut en donnant le jour à Aemma."}],
+["saera",{n:"Saera Targaryen",s:"f",b:67,d:null,r:4,h:"Targaryen",
+  bio:"La fille scandaleuse : ses jeux avec trois jeunes seigneurs firent éclater la cour. Enfuie du septuaire, elle tint une maison de plaisir à Lys puis à Volantis et ne revit jamais son père."}],
+["viserra",{n:"Viserra Targaryen",s:"f",b:71,d:84,r:4,h:"Targaryen",
+  bio:"La plus belle des filles de Jaehaerys, promise au vieux sire Manderly contre son gré. Elle se rompit le cou en menant une course de chevaux, ivre, dans les rues de Port-Réal."}],
+["gaemon-73",{n:"Gaemon Targaryen",s:"m",b:73,d:73,r:4,h:"Targaryen",bio:"Mort au berceau."}],
+["valerion-77",{n:"Valerion Targaryen",s:"m",b:77,d:77,r:4,h:"Targaryen",bio:"Mort au berceau."}],
+["gael-80",{n:"Gael Targaryen",e:"l'Enfant d'hiver",s:"f",b:80,d:99,r:4,h:"Targaryen",
+  bio:"Dernière-née, simple d'esprit et tendre, favorite d'Alysanne. Séduite par un chanteur, elle perdit son enfant et se noya dans la Néra ; on cacha la vérité à la reine."}],
+["rodrik-arryn",{n:"Rodrik Arryn",s:"m",b:null,d:null,r:4,h:"Arryn",bio:"Sire des Eyrié, époux de Daella et père d'Aemma."}],
+
+["corlys",{n:"Corlys Velaryon",e:"le Serpent de mer",s:"m",b:53,d:132,r:5,h:"Velaryon",f:"n",
+  bio:"Le plus grand navigateur de Westeros et l'homme le plus riche du royaume, sire de Lamarck. Neuf grands voyages, une flotte immense, une ambition démesurée pour son sang : il fit la fortune — et le malheur — de sa maison."}],
+["rhaenys-tp",{n:"Rhaenys Targaryen",e:"la Reine qui ne fut jamais",s:"f",b:74,d:129,r:5,h:"Targaryen",dr:"Meleys",f:"n",
+  bio:"Fille d'Aemon, écartée du trône deux fois — pour son oncle Baelon, puis pour son cousin Viserys au Grand Conseil de 101. Elle mourut en chargeant seule les deux dragons ennemis à Rougefort."}],
+["viserys-i",{n:"Viserys Targaryen",s:"m",b:77,d:129,r:5,h:"Targaryen",dr:"Balerion",k:["Ier","103 – 129","5e"],
+  bio:"Roi débonnaire d'un règne prospère, dernier cavalier de Balerion. Il désigna sa fille Rhaenyra héritière puis engendra des fils sans jamais trancher : sa mort ouvrit la Danse des Dragons."}],
+["daemon",{n:"Daemon Targaryen",e:"le Prince canaille",s:"m",b:81,d:130,r:5,h:"Targaryen",dr:"Caraxès",f:"n",
+  bio:"Frère du roi, guerrier brillant et incontrôlable, Roi du Détroit par ses propres armes. Époux de Rhaenyra et âme militaire des Noirs, il disparut au-dessus de l'Œil-des-Dieux en emportant Aemond dans la mort."}],
+["aegon-baelon",{n:"Aegon Targaryen",s:"m",b:84,d:84,r:5,h:"Targaryen",
+  bio:"Troisième fils de Baelon et d'Alyssa, mort à trois jours ; sa naissance emporta sa mère."}],
+["aemma",{n:"Aemma Arryn",s:"f",b:82,d:105,r:5,h:"Arryn",
+  bio:"Reine de Viserys Ier, mère de Rhaenyra. Après plusieurs enfants perdus, elle mourut d'un accouchement forcé par les mestres pour sauver un fils qui ne vécut qu'un jour."}],
+["alicent",{n:"Alicent Hightower",s:"f",b:88,d:133,r:5,h:"Hightower",f:"v",
+  bio:"Fille de la Main Otto Hightower, seconde reine de Viserys. Mère d'Aegon II, d'Helaena, d'Aemond et de Daeron, elle porta le vert et mena le parti de ses fils jusqu'à finir prisonnière, ayant tout perdu."}],
+
+["laena",{n:"Laena Velaryon",s:"f",b:92,d:120,r:6,h:"Velaryon",dr:"Vhagar",
+  bio:"Fille de Corlys et de Rhaenys, cavalière de Vhagar dès l'enfance. Épouse de Daemon, mère de Baela et Rhaena, elle mourut en couches à Pentos — et voulut mourir en vol."}],
+["laenor",{n:"Laenor Velaryon",s:"m",b:94,d:120,r:6,h:"Velaryon",dr:"Fumeraine",
+  bio:"Époux de Rhaenyra pour l'alliance, plus attaché à ses compagnons qu'à sa femme. Il fut poignardé à Bourg-de-Rouille dans une querelle dont beaucoup soupçonnent qu'elle fut achetée."}],
+["rhaenyra",{n:"Rhaenyra Targaryen",e:"la Délectation du royaume",s:"f",b:97,d:130,r:6,h:"Targaryen",dr:"Syrax",f:"n",k:["","129 – 130","6e"],
+  bio:"Héritière désignée de Viserys Ier, reine des Noirs, couronnée à Port-Réal. Trahie par sa propre ville, elle fut livrée à Aegon II et dévorée par Feusolaire sous les yeux de son fils."}],
+["baelon-vis",{n:"Baelon Targaryen",s:"m",b:105,d:105,r:6,h:"Targaryen",
+  bio:"Le fils tant espéré de Viserys et d'Aemma, mort le lendemain de sa naissance."}],
+["aegon-ii",{n:"Aegon Targaryen",s:"m",b:107,d:131,r:6,h:"Targaryen",dr:"Feusolaire",f:"v",k:["II","129 – 131","7e"],
+  bio:"Couronné en hâte à la mort de son père par le parti Vert. Brisé de corps après Rougefort, il reprit son trône, fit tuer sa demi-sœur — et mourut empoisonné six mois plus tard."}],
+["helaena",{n:"Helaena Targaryen",s:"f",b:109,d:130,r:6,h:"Targaryen",dr:"Rêvefeu",f:"v",
+  bio:"Sœur et reine d'Aegon II, douce, aimée du petit peuple, portée aux songes prophétiques. Après le meurtre de son fils sous ses yeux, elle sombra et se jeta d'une fenêtre du Donjon Rouge."}],
+["aemond",{n:"Aemond Targaryen",e:"le Borgne",s:"m",b:110,d:130,r:6,h:"Targaryen",dr:"Vhagar",f:"v",
+  bio:"Il perdit un œil enfant pour avoir réclamé un dragon, et gagna Vhagar, la plus vieille et la plus terrible. En tuant Lucerys au-dessus d'Accalmie, il rendit la guerre inévitable."}],
+["daeron",{n:"Daeron Targaryen",e:"le Hardi",s:"m",b:114,d:130,r:6,h:"Targaryen",dr:"Tessarion",f:"v",
+  bio:"Le plus courtois des fils d'Alicent, élevé à Villevieille. Vainqueur à Cité-Bourg, il disparut dans la déroute de la Bataille de la Cendre."}],
+
+["jacaerys",{n:"Jacaerys Velaryon",s:"m",b:114,d:130,r:7,h:"Velaryon",dr:"Vermax",f:"n",
+  bio:"Fils aîné de Rhaenyra et son héritier. Il vola jusqu'au Nord et au Mur pour rallier des alliés ; il mourut au Gosier en tentant d'abattre la flotte triarque."}],
+["lucerys",{n:"Lucerys Velaryon",s:"m",b:115,d:129,r:7,h:"Velaryon",dr:"Arrax",f:"n",
+  bio:"Envoyé en ambassade à Accalmie, il y trouva Aemond. Sa mort dans la tempête fut l'étincelle de la Danse."}],
+["joffrey-v",{n:"Joffrey Velaryon",s:"m",b:117,d:130,r:7,h:"Velaryon",dr:"Tyraxès",f:"n",
+  bio:"Le plus jeune fils de Rhaenyra. Pendant l'assaut de la Fosse aux dragons, il tenta de gagner les airs sur Syrax et tomba des toits de la ville."}],
+["baela",{n:"Baela Targaryen",s:"f",b:116,d:null,r:7,h:"Targaryen",dr:"Danselune",f:"n",
+  bio:"Fille de Daemon et de Laena, aussi indomptable que son père. Sur Danselune elle affronta Feusolaire à Peyredragon et le fit tomber ; elle survécut à la guerre et épousa Alyn Velaryon."}],
+["rhaena-d",{n:"Rhaena Targaryen",s:"f",b:116,d:null,r:7,h:"Targaryen",dr:"Aurore",f:"n",
+  bio:"Sœur jumelle de Baela, plus douce, longtemps sans dragon. Elle couva et fit éclore Aurore, et fut dame de compagnie de la reine Jaehaera."}],
+["visenya-sb",{n:"Visenya Targaryen",s:"f",b:129,d:129,r:7,h:"Targaryen",
+  bio:"Fille de Rhaenyra et de Daemon, née avant terme et morte aussitôt à Peyredragon, au début de la guerre."}],
+["aegon-iii",{n:"Aegon Targaryen",e:"le Fléau des dragons",s:"m",b:120,d:157,r:7,h:"Targaryen",dr:"Nuée d'Orage",f:"n",k:["III","131 – 157","8e"],
+  bio:"Il vit sa mère dévorée sous ses yeux à treize ans et n'en guérit jamais. Roi silencieux et vêtu de noir, il régna d'abord sous la coupe de régents ; sous lui, le dernier dragon mourut."}],
+["viserys-ii",{n:"Viserys Targaryen",s:"m",b:122,d:172,r:7,h:"Targaryen",f:"n",
+  bio:"Cadet d'Aegon III, capturé en mer et retenu des années à Lys. Revenu marié à Larra Rogare, il devint le véritable administrateur du royaume, puis roi bien plus tard."}],
+["jaehaerys-t",{n:"Jaehaerys Targaryen",s:"m",b:123,d:130,r:7,h:"Targaryen",f:"v",
+  bio:"Fils et héritier d'Aegon II, jumeau de Jaehaera. Assassiné à six ans dans le Donjon Rouge par Sang et Fromage, sous les yeux de sa mère."}],
+["jaehaera",{n:"Jaehaera Targaryen",s:"f",b:123,d:133,r:7,h:"Targaryen",f:"v",
+  bio:"Seule enfant d'Aegon II à survivre à la guerre, mariée à Aegon III pour sceller la paix. Elle mourut à dix ans d'une chute par une fenêtre — accident ou meurtre, nul ne sait."}],
+["maelor",{n:"Maelor Targaryen",s:"m",b:127,d:130,r:7,h:"Targaryen",f:"v",
+  bio:"Petit-fils de Viserys Ier, mis en pièces par une foule à Cité-Bourg alors qu'on tentait de le mettre à l'abri. Il avait deux ans."}],
+["alyn",{n:"Alyn Velaryon",e:"Poing-de-Chêne",s:"m",b:117,d:null,r:7,h:"Velaryon",f:"n",
+  bio:"Reconnu par Corlys comme son héritier, marin de génie devenu sire de Lamarck et amiral. Époux de Baela."}],
+["larra",{n:"Larra Rogare",s:"f",b:113,d:null,r:7,h:"Rogare",
+  bio:"Lysienne de la puissante maison Rogare, de sept ans l'aînée de Viserys II. Son clan domina un temps la régence avant de s'effondrer ; elle finit par regagner Lys."}],
+
+["laena-y",{n:"Laena Velaryon",s:"f",b:135,d:null,r:8,h:"Velaryon",bio:"Fille d'Alyn et de Baela, née après la guerre."}],
+["aegon-iv",{n:"Aegon Targaryen",e:"l'Indigne",s:"m",b:135,d:184,r:8,h:"Targaryen",
+  bio:"Fils aîné de Viserys II. Son règne, bien plus tard, et ses bâtards légitimés sur son lit de mort engendreront les rébellions Feunoyr."}],
+["aemon-dk",{n:"Aemon Targaryen",e:"le Chevalier-Dragon",s:"m",b:136,d:183,r:8,h:"Targaryen",
+  bio:"Frère cadet d'Aegon IV, futur parangon de chevalerie et Lord Commandant de la Garde Royale."}],
+["naerys",{n:"Naerys Targaryen",s:"f",b:138,d:179,r:8,h:"Targaryen",
+  bio:"Sœur et épouse malheureuse d'Aegon IV, pieuse et de santé fragile."}],
+
+/* — époux et épouses sans descendance dans l'arbre (visibles dans les fiches) — */
+["ceryse",{n:"Ceryse Hightower",s:"f",b:null,d:45,r:null,h:"Hightower",
+  bio:"Première épouse de Maegor, répudiée pour stérilité ; sa maison en fit un grief contre la Couronne. Morte subitement, dit-on."}],
+["alys-h",{n:"Alys Harroway",s:"f",b:null,d:44,r:null,h:"Harroway",
+  bio:"Deuxième épouse de Maegor. Après un enfant mort-né difforme, elle fut mise en pièces sur ordre du roi."}],
+["tyanna",{n:"Tyanna de la Tour",s:"f",b:null,d:45,r:null,h:"—",
+  bio:"Maîtresse des espions et empoisonneuse de Maegor, épousée par crainte autant que par désir. Il la tua de sa main après ses aveux."}],
+["elinor",{n:"Elinor Costayne",s:"f",b:null,d:null,r:null,h:"Costayne",
+  bio:"L'une des « Épousées noires », veuve prise par Maegor le même jour que deux autres."}],
+["jeyne-w",{n:"Jeyne Westerling",s:"f",b:null,d:null,r:null,h:"Westerling",
+  bio:"L'une des « Épousées noires » de Maegor, mère d'un enfant mort-né."}],
+["androw",{n:"Androw Farman",s:"m",b:null,d:54,r:null,h:"Farman",
+  bio:"Second époux de Rhaena, méprisé de tous. Il empoisonna les amies de sa femme puis se jeta du haut d'une tour."}],
+["rhea-royce",{n:"Rhea Royce",s:"f",b:null,d:115,r:null,h:"Royce",
+  bio:"Héritière de Roches-aux-Runes et première épouse de Daemon, qui la détestait et l'appelait « ma bronzée garce ». Morte d'une chute de cheval — trop opportune au goût du Val."}],
+["corwyn",{n:"Corwyn Corbray",s:"m",b:null,d:null,r:null,h:"Corbray",
+  bio:"Époux de Rhaena, fille de Daemon, après la guerre."}],
+["daenaera",{n:"Daenaera Velaryon",s:"f",b:126,d:null,r:null,h:"Velaryon",
+  bio:"Choisie à six ans parmi mille fillettes lors du « Bal des Jeunes Vierges », elle devint la seconde reine d'Aegon III et lui donna cinq enfants."}]
+];
+
+/* Unions : [époux, épouse, [enfants], type] — type "l" = liaison */
+const UNIONS = [
+ ["aerion","valaena",["visenya","aegon-i","rhaenys"]],
+ ["aegon-i","visenya",["maegor-i"]],
+ ["aegon-i","rhaenys",["aenys-i"]],
+ ["aenys-i","alyssa-vel",["rhaena","aegon-unc","viserys-aenys","jaehaerys-i","alysanne","vaella"]],
+ ["rogar","alyssa-vel",["jocelyn","boremund"]],
+ ["aegon-unc","rhaena",["aerea","rhaella"]],
+ ["maegor-i","rhaena",[]],
+ ["maegor-i","ceryse",[]],["maegor-i","alys-h",[]],["maegor-i","tyanna",[]],
+ ["maegor-i","elinor",[]],["maegor-i","jeyne-w",[]],
+ ["androw","rhaena",[]],
+ ["jaehaerys-i","alysanne",["aegon-52","daenerys-55","aemon-p","baelon","alyssa-t","maegelle","vaegon","daella","saera","viserra","gaemon-73","valerion-77","gael-80"]],
+ ["aemon-p","jocelyn",["rhaenys-tp"]],
+ ["baelon","alyssa-t",["viserys-i","daemon","aegon-baelon"]],
+ ["rodrik-arryn","daella",["aemma"]],
+ ["corlys","rhaenys-tp",["laena","laenor"]],
+ ["viserys-i","aemma",["rhaenyra","baelon-vis"]],
+ ["viserys-i","alicent",["aegon-ii","helaena","aemond","daeron"]],
+ ["daemon","rhea-royce",[]],
+ ["daemon","laena",["baela","rhaena-d"]],
+ ["daemon","rhaenyra",["aegon-iii","viserys-ii","visenya-sb"]],
+ ["laenor","rhaenyra",["jacaerys","lucerys","joffrey-v"]],
+ ["aegon-ii","helaena",["jaehaerys-t","jaehaera","maelor"]],
+ ["alyn","baela",["laena-y"]],
+ ["viserys-ii","larra",["aegon-iv","aemon-dk","naerys"]],
+ ["aegon-iii","jaehaera",[]],
+ ["aegon-iii","daenaera",[]],
+ ["corwyn","rhaena-d",[]]
+];
+
+/* Ordre d'affichage, rangée par rangée */
+const ROWS = [
+ ["aerion","valaena"],
+ ["visenya","aegon-i","rhaenys"],
+ ["maegor-i","aenys-i","alyssa-vel","rogar"],
+ ["rhaena","aegon-unc","viserys-aenys","jaehaerys-i","alysanne","vaella","boremund"],
+ ["aerea","rhaella","aegon-52","daenerys-55","jocelyn","aemon-p","baelon","alyssa-t","maegelle","vaegon","daella","rodrik-arryn","saera","viserra","gaemon-73","valerion-77","gael-80"],
+ ["corlys","rhaenys-tp","daemon","aemma","viserys-i","alicent","aegon-baelon"],
+ ["laena","laenor","rhaenyra","baelon-vis","aegon-ii","helaena","aemond","daeron"],
+ ["alyn","baela","rhaena-d","jacaerys","lucerys","joffrey-v","visenya-sb","larra","viserys-ii","aegon-iii","jaehaera","jaehaerys-t","maelor"],
+ ["laena-y","aegon-iv","aemon-dk","naerys"]
+];
+
+/* Chronologie */
+const EVENTS = [
+ [-2,"Aegon débarque à l'embouchure de la Néra et bâtit un fort de terre : Port-Réal.",0],
+ [1,"Couronnement à Villevieille. L'an 1 après la Conquête commence.",1],
+ [2,"Le Champ de Feu : Balerion, Meraxes et Vhagar anéantissent les armées Lannister et Gardener.",0],
+ [4,"Première guerre de Dorne : la seule des sept couronnes qu'Aegon ne prendra jamais.",0],
+ [10,"Rhaenys et Meraxes tombent au-dessus de Lancehélion.",0],
+ [37,"Mort d'Aegon Ier. Aenys Ier ceint la couronne.",1],
+ [41,"Le mariage de Rhaena et d'Aegon soulève la Foi. La Foi Militante prend les armes.",0],
+ [42,"Mort d'Aenys. Maegor rentre de Pentos et s'empare du Trône de Fer.",1],
+ [43,"Bataille de l'Œil-des-Dieux : Balerion tue Vif-Argent et Aegon le Non-couronné.",0],
+ [44,"Le Jugement de la Fosse : Maegor abat des milliers d'hommes de la Foi.",0],
+ [48,"Maegor est trouvé mort sur le Trône de Fer. Jaehaerys, quinze ans, est couronné.",1],
+ [49,"Jaehaerys épouse sa sœur Alysanne. La paix avec la Foi est scellée.",0],
+ [54,"Mort d'Alyssa Velaryon en couches ; chute politique de Rogar Baratheon.",0],
+ [56,"Retour et mort atroce d'Aerea Targaryen ; Balerion revient blessé.",0],
+ [58,"Alysanne vole jusqu'au Mur et dote la Garde de Neuf-Sentinelles.",0],
+ [92,"Mort du prince Aemon. Jaehaerys nomme Baelon héritier, écartant Rhaenys.",0],
+ [101,"Grand Conseil d'Harrenhal : les seigneurs choisissent Viserys contre Rhaenys et Laenor.",0],
+ [103,"Mort du Vieux Roi après cinquante-cinq ans de règne. Viserys Ier monte sur le trône.",1],
+ [105,"Mort d'Aemma Arryn. Viserys nomme Rhaenyra héritière et fait jurer les seigneurs.",0],
+ [111,"Au tournoi du cinquième anniversaire du mariage royal, la reine porte le vert et la princesse le noir.",0],
+ [120,"L'Année du Printemps Rouge : Laena meurt en couches, Laenor est poignardé.",0],
+ [129,"Mort de Viserys Ier. Aegon II est couronné en secret ; Lucerys meurt au-dessus d'Accalmie. La Danse commence.",1],
+ [129,"Sang et Fromage : le prince Jaehaerys est assassiné dans le Donjon Rouge.",0],
+ [129,"Rougefort : Rhaenys et Meleys tombent ; Aegon II est brisé.",0],
+ [130,"Bataille au-dessus de l'Œil-des-Dieux : Daemon et Aemond s'entretuent. Émeute et massacre des dragons dans la Fosse.",0],
+ [130,"Rhaenyra est livrée à Aegon II et dévorée par Feusolaire à Peyredragon.",0],
+ [131,"Aegon II meurt empoisonné. Aegon III, treize ans, est couronné : la Danse s'achève.",1],
+ [133,"Mort de la reine Jaehaera, tombée d'une fenêtre du Donjon Rouge.",0],
+ [136,"Fin de la régence : Aegon III prend le pouvoir. Il ne reste plus de dragon vivant.",0]
+];
+
+const REGNES = [
+ ["aegon-i","Aegon Ier","1 – 37"],["aenys-i","Aenys Ier","37 – 42"],["maegor-i","Maegor Ier","42 – 48"],
+ ["jaehaerys-i","Jaehaerys Ier","48 – 103"],["viserys-i","Viserys Ier","103 – 129"],
+ ["rhaenyra","Rhaenyra","129 – 130"],["aegon-ii","Aegon II","129 – 131"],["aegon-iii","Aegon III","131 – 157"]
+];
+
+const JALONS = [
+ [999,"Tout le livre"],[37,"La Conquête (jusqu'en 37)"],[48,"Aenys et Maegor (jusqu'en 48)"],
+ [103,"Jaehaerys et Alysanne (jusqu'en 103)"],[129,"Viserys Ier (jusqu'en 129)"],
+ [131,"La Danse des Dragons (jusqu'en 131)"]
+];
+
+/* ====================== état & utilitaires ====================== */
+const P = {}; GENS.forEach(([id,o])=>{ o.id=id; P[id]=o; });
+const S = {
+  theme: localStorage.getItem('tg-theme') || 'jour',
+  fs: +(localStorage.getItem('tg-fs') || 1),
+  limite: +(localStorage.getItem('tg-limite') || 999),
+  faction: false, sel: null, mode: 'tous'
+};
+
+const an = v => v==null ? "" : (v<0 ? Math.abs(v)+" av. C." : v+" ap. C.");
+const dates = p => {
+  if(p.b==null && p.d==null) return "";
+  const cache = p.d!=null && p.d > S.limite;
+  const b = p.b==null ? "?" : (p.b<0? Math.abs(p.b)+" av." : p.b);
+  if(cache) return b + " – …";
+  return b + (p.d!=null ? " – " + p.d : (p.b!=null? " – ?" : ""));
+};
+const visible = p => p.b==null || p.b <= S.limite;     // pas encore né = pas encore dans l'histoire
+const spoiled = p => p.d!=null && p.d > S.limite;      // sa fin (et sa fiche) est à venir
+const prenom = p => p.n.split(' ')[0];
+const nomCourt = p => prenom(p) + (p.k && p.k[0] ? " "+p.k[0] : "");
+
+/* index des relations */
+const rel = {};
+Object.keys(P).forEach(id => rel[id] = {par:null, sp:[], en:[], fr:[]});
+UNIONS.forEach(u => {
+  const [a,b,cs] = u;
+  if(P[a]&&P[b]){ rel[a].sp.push(b); rel[b].sp.push(a); }
+  cs.forEach(c => {
+    if(!P[c]) return;
+    rel[c].par = [a,b];
+    rel[a].en.push(c); rel[b].en.push(c);
+  });
+});
+Object.keys(rel).forEach(id=>{
+  const pa = rel[id].par; if(!pa) return;
+  const u = UNIONS.find(u=>u[0]===pa[0]&&u[1]===pa[1]);
+  rel[id].fr = u[2].filter(x=>x!==id);
+  // demi-frères et demi-sœurs : les enfants d'un seul des deux parents
+  const demi = new Set();
+  UNIONS.forEach(v=>{
+    if(v[0]===pa[0]&&v[1]===pa[1]) return;
+    if(v[0]===pa[0]||v[1]===pa[0]||v[0]===pa[1]||v[1]===pa[1])
+      v[2].forEach(c=>{ if(c!==id) demi.add(c); });
+  });
+  rel[id].demi = [...demi];
+});
+
+/* ====================== calcul des positions ====================== */
+const NW=124, NH=54, GX=16, GY=118;
+const pos = {}, rowOf = {};
+ROWS.forEach((row,ri)=> row.forEach((id,i)=>{ pos[id]=i*(NW+GX); rowOf[id]=ri; }));
+const yOf = id => rowOf[id]*GY;
+const inTree = id => pos[id]!==undefined;
+const moyenne = a => a.reduce((s,v)=>s+v,0)/a.length;
+
+function calcule(){
+  for(let it=0; it<220; it++){
+    const ordre = it%2 ? ROWS : [...ROWS].slice().reverse();
+    ordre.forEach(row=>{
+      const cible = row.map(id=>{
+        const t=[];
+        const pa = rel[id].par;
+        if(pa && inTree(pa[0]) && inTree(pa[1])) t.push((pos[pa[0]]+pos[pa[1]])/2);
+        const en = rel[id].en.filter(inTree);
+        if(en.length) t.push(moyenne(en.map(c=>pos[c])));
+        const sp = rel[id].sp.filter(x=>inTree(x)&&rowOf[x]===rowOf[id]);
+        if(sp.length) t.push(moyenne(sp.map(x=>pos[x])));
+        return t.length ? moyenne(t) : pos[id];
+      });
+      // on respecte l'ordre de la rangée avec un écart minimal
+      const x = []; let cur = -1e9;
+      for(let i=0;i<row.length;i++){ x[i] = Math.max(cible[i], cur + NW+GX); cur = x[i]; }
+      for(let i=row.length-2;i>=0;i--){ x[i] = Math.min(x[i], x[i+1] - (NW+GX)); }
+      const decal = moyenne(cible.map((c,i)=>c-x[i]));
+      row.forEach((id,i)=> pos[id] = x[i] + decal*0.6);
+
+      // les époux voisins restent collés l'un à l'autre
+      const idx = {}; row.forEach((id,i)=> idx[id]=i);
+      UNIONS.forEach(u=>{
+        const a=u[0], b=u[1];
+        if(idx[a]==null || idx[b]==null || Math.abs(idx[a]-idx[b])!==1) return;
+        const g = (pos[a]+pos[b])/2, e = (NW+GX)/2;
+        const [gauche,droite] = idx[a]<idx[b] ? [a,b] : [b,a];
+        pos[gauche] = g-e; pos[droite] = g+e;
+      });
+      let cur2 = -1e9;
+      row.forEach(id=>{ pos[id] = Math.max(pos[id], cur2 + NW+GX); cur2 = pos[id]; });
+    });
+  }
+  let min=1e9,max=-1e9;
+  Object.keys(pos).forEach(id=>{ min=Math.min(min,pos[id]); max=Math.max(max,pos[id]); });
+  Object.keys(pos).forEach(id=> pos[id] -= min);
+  return {w: max-min + NW + 60, h: (ROWS.length-1)*GY + NH + 60};
+}
+const DIM = calcule();
+const X = id => pos[id] + 30;            // coin gauche
+const CX = id => X(id) + NW/2;
+const Y = id => yOf(id) + 30;
+
+/* ====================== rendu de l'arbre ====================== */
+const svg = document.getElementById('svg');
+function dessine(){
+  const dim = {w:DIM.w, h:DIM.h};
+  let liens = "", noeuds = "";
+  const anc = new Set(), desc = new Set();
+  if(S.sel){ marque(S.sel, 'par', anc); marque(S.sel, 'en', desc); }
+  const surligne = id => S.sel && (id===S.sel || anc.has(id) || desc.has(id));
+
+  UNIONS.forEach((u,ui)=>{
+    const [a,b,cs] = u;
+    if(!inTree(a) || !inTree(b)) return;
+    if(!visible(P[a]) || !visible(P[b])) return;
+    const hi = S.sel && (surligne(a)&&surligne(b) || cs.some(c=>surligne(c)&&(surligne(a)||surligne(b))));
+    const cls = "lien mar" + (hi?" hi":"");
+    let ax, ay;                                   // point d'où part la descendance
+    if(rowOf[a]===rowOf[b]){
+      const y = Y(a)+NH/2, x1=Math.min(CX(a),CX(b)), x2=Math.max(CX(a),CX(b));
+      const g = Math.min(X(a),X(b)) + NW, dte = Math.max(X(a),X(b));
+      liens += `<path class="${cls}" d="M${g} ${y} H${dte}"/>`;
+      liens += `<circle cx="${(g+dte)/2}" cy="${y}" r="3" fill="var(--enc2)"/>`;
+      ax = (x1+x2)/2; ay = Y(a)+NH;
+    } else {
+      const haut = rowOf[a]<rowOf[b] ? a : b, bas = haut===a?b:a;
+      const cote = CX(haut) < CX(bas) ? -1 : 1;
+      const xb = X(bas) + (cote<0 ? 0 : NW), yb = Y(bas)+NH/2;
+      liens += `<path class="${cls}" d="M${CX(haut)} ${Y(haut)+NH} V${yb} H${xb}"/>`;
+      liens += `<circle cx="${(CX(haut)+xb)/2}" cy="${yb}" r="3" fill="var(--enc2)"/>`;
+      ax = (CX(haut)+xb)/2; ay = yb;
+    }
+    const enf = cs.filter(c=>inTree(c) && visible(P[c]));
+    if(!enf.length) return;
+    const yEnf = Math.min(...enf.map(Y));
+    const barre = yEnf - 22 - (ui%3)*7;
+    const xs = enf.map(CX);
+    liens += `<path class="lien${hi?' hi':''}" d="M${ax} ${ay} V${barre}"/>`;
+    liens += `<path class="lien${hi?' hi':''}" d="M${Math.min(...xs,ax)} ${barre} H${Math.max(...xs,ax)}"/>`;
+    enf.forEach(c=> liens += `<path class="lien${S.sel&&surligne(c)?' hi':''}" d="M${CX(c)} ${barre} V${Y(c)}"/>`);
+  });
+
+  ROWS.flat().forEach(id=>{
+    const p = P[id]; if(!visible(p)) return;
+    const x=X(id), y=Y(id);
+    let c = "nd";
+    if(p.k) c+=" roi";
+    if(p.f) c+=" f"+p.f;
+    if(id===S.sel) c+=" sel";
+    if(S.sel && !surligne(id)) c+=" dim";
+    if(S.mode==='rois' && !p.k) c+=" dim";
+    if(S.mode==='dragons' && !p.dr) c+=" dim";
+    const nom = nomCourt(p);
+    const maison = p.h && p.h!=="Targaryen" ? p.h : "";
+    noeuds += `<g class="${c}" data-id="${id}">
+      <rect x="${x}" y="${y}" width="${NW}" height="${NH}"/>
+      ${p.k?`<text class="cr" x="${x+NW-9}" y="${y+14}" text-anchor="end" fill="var(--or)">♛</text>`:""}
+      <text class="nm" x="${x+NW/2}" y="${y+21}" text-anchor="middle">${nom}</text>
+      <text class="an" x="${x+NW/2}" y="${y+34}" text-anchor="middle">${dates(p)}</text>
+      ${maison?`<text class="hs" x="${x+NW/2}" y="${y+46}" text-anchor="middle">${maison}</text>`
+        : p.dr?`<text class="dg" x="${x+NW/2}" y="${y+46}" text-anchor="middle">🜂 ${p.dr}</text>`:""}
+    </g>`;
+  });
+
+  svg.setAttribute('width', dim.w); svg.setAttribute('height', dim.h);
+  svg.setAttribute('viewBox', `0 0 ${dim.w} ${dim.h}`);
+  svg.innerHTML = liens + noeuds;
+}
+function marque(id, sens, ens){
+  const suite = sens==='par' ? (rel[id].par||[]) : rel[id].en;
+  suite.forEach(x=>{ if(!ens.has(x)){ ens.add(x); marque(x, sens, ens); } });
+}
+
+/* ====================== zoom / déplacement ====================== */
+const zone = document.getElementById('zone'), pan = document.getElementById('pan');
+let vue = {x:0, y:0, k:1};
+const applique = ()=> pan.style.transform = `translate(${vue.x}px,${vue.y}px) scale(${vue.k})`;
+function ajuste(anim, brut){
+  const r = zone.getBoundingClientRect();
+  const kf = Math.min(r.width/DIM.w, r.height/DIM.h) * 0.96;
+  const k = brut ? kf : Math.max(kf, 0.45);          // au démarrage, jamais illisible
+  if(k > kf + 0.001){                                 // l'arbre déborde : on se pose en haut, sur Aegon
+    vue = {k, x: r.width/2 - CX('aegon-i')*k, y: 40};
+  } else {
+    vue = {k, x:(r.width-DIM.w*k)/2, y:(r.height-DIM.h*k)/2 + 8};
+  }
+  if(anim){ pan.style.transition='transform .25s'; setTimeout(()=>pan.style.transition='',260); }
+  applique();
+}
+function centre(id){
+  if(!inTree(id)) return;
+  const r = zone.getBoundingClientRect();
+  vue.k = Math.max(vue.k, 0.85);
+  vue.x = r.width/2 - CX(id)*vue.k;
+  vue.y = r.height/2 - (Y(id)+NH/2)*vue.k;
+  pan.style.transition='transform .3s'; applique(); setTimeout(()=>pan.style.transition='',320);
+}
+function zoom(f, cx, cy){
+  const r = zone.getBoundingClientRect();
+  cx = cx==null ? r.width/2 : cx; cy = cy==null ? r.height/2 : cy;
+  const k2 = Math.min(3, Math.max(0.12, vue.k*f));
+  vue.x = cx - (cx-vue.x)*(k2/vue.k); vue.y = cy - (cy-vue.y)*(k2/vue.k); vue.k = k2;
+  applique();
+}
+let ptrs = new Map(), dep = null, bouge = 0;
+zone.addEventListener('pointerdown', e=>{
+  zone.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  bouge = 0;
+  if(ptrs.size===1) dep = {x:e.clientX-vue.x, y:e.clientY-vue.y};
+  if(ptrs.size===2) dep = null;
+});
+zone.addEventListener('pointermove', e=>{
+  if(!ptrs.has(e.pointerId)) return;
+  const av = ptrs.get(e.pointerId);
+  bouge += Math.abs(e.clientX-av.x)+Math.abs(e.clientY-av.y);
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1 && dep){ vue.x = e.clientX-dep.x; vue.y = e.clientY-dep.y; applique(); }
+  else if(ptrs.size===2){
+    const [a,b] = [...ptrs.values()];
+    const d = Math.hypot(a.x-b.x, a.y-b.y);
+    if(zone._d){
+      const r = zone.getBoundingClientRect();
+      zoom(d/zone._d, (a.x+b.x)/2 - r.left, (a.y+b.y)/2 - r.top);
+    }
+    zone._d = d;
+  }
+});
+['pointerup','pointercancel'].forEach(ev=> zone.addEventListener(ev, e=>{
+  ptrs.delete(e.pointerId);
+  if(ptrs.size<2) zone._d = null;
+  if(ptrs.size===0 && bouge < 8){
+    const g = e.target.closest('.nd');
+    if(g) ouvre(g.dataset.id);
+  }
+}));
+zone.addEventListener('wheel', e=>{ e.preventDefault();
+  const r = zone.getBoundingClientRect();
+  zoom(e.deltaY<0?1.12:0.89, e.clientX-r.left, e.clientY-r.top);
+},{passive:false});
+document.getElementById('z-plus').onclick = ()=>zoom(1.25);
+document.getElementById('z-moins').onclick = ()=>zoom(0.8);
+document.getElementById('z-fit').onclick = ()=>{ S.sel=null; dessine(); ajuste(true, true); };
+
+/* ====================== fiche ====================== */
+const fiche = document.getElementById('fiche'), feuille = document.getElementById('feuille');
+document.querySelector('#fiche .voile').onclick = ferme;
+function ferme(){ fiche.classList.remove('on'); }
+
+function ouvre(id){
+  const p = P[id]; if(!p) return;
+  S.sel = id; dessine();
+  const cache = spoiled(p);
+  const tags = [];
+  if(p.k) tags.push(`<span class="tag or">♛ ${p.k[2]} ${p.s==='f'?'souveraine':'souverain'} · ${p.k[1]} ap. C.</span>`);
+  if(p.dr && !cache) tags.push(`<span class="tag dg">🜂 ${p.dr}</span>`);
+  if(p.f && !cache) tags.push(`<span class="tag">${p.f==='n'?'Camp des Noirs':'Camp des Verts'}</span>`);
+  if(p.h) tags.push(`<span class="tag">Maison ${p.h}</span>`);
+  const bloc = (titre, ids, extra) => {
+    ids = ids.filter(x=>P[x] && visible(P[x]));
+    if(!ids.length) return "";
+    return `<h4>${titre}</h4><div class="chips">` + ids.map(x=>{
+      const q=P[x];
+      return `<button class="chip${q.k?' roi':''}" data-go="${x}">${q.k?'♛ ':''}${nomCourt(q)} <small>${dates(q)||q.h}</small></button>`;
+    }).join('') + (extra||'') + `</div>`;
+  };
+  feuille.innerHTML = `
+    <div class="poignee"></div>
+    <div class="fh"><h2>${p.n}</h2><button class="x" id="x-fiche">✕</button></div>
+    ${p.e?`<div class="epi">« ${p.e} »</div>`:""}
+    <div style="font-size:.9rem;color:var(--enc2)">${p.b!=null?"Né"+(p.s==='f'?"e":"")+" en "+an(p.b):"Dates inconnues"}${
+      p.d!=null && !cache ? " · mort"+(p.s==='f'?"e":"")+" en "+an(p.d)+(p.b!=null&&p.b>=0?` (${p.d-p.b} ans)`:"") : ""}</div>
+    <div class="meta">${tags.join('')}</div>
+    ${cache
+      ? `<div class="masque">La suite de son histoire vient après ton avancée dans le livre.<br><button id="reveler">Révéler quand même</button></div>`
+      : `<div class="bio">${p.bio||""}</div>`}
+    <div class="rel">
+      ${bloc("Parents", rel[id].par||[])}
+      ${bloc(rel[id].sp.length>1?"Époux et épouses":"Époux·se", rel[id].sp)}
+      ${bloc("Enfants", rel[id].en)}
+      ${bloc("Frères et sœurs", rel[id].fr)}
+      ${bloc("Demi-frères et demi-sœurs", rel[id].demi||[])}
+    </div>
+    <div class="act">
+      ${inTree(id)?`<button id="voir-arbre">Voir dans l'arbre</button>`:""}
+      <button class="sec" id="fermer2">Fermer</button>
+    </div>`;
+  feuille.scrollTop = 0;
+  fiche.classList.add('on');
+  feuille.querySelectorAll('[data-go]').forEach(b=> b.onclick = ()=>ouvre(b.dataset.go));
+  feuille.querySelector('#x-fiche').onclick = ferme;
+  feuille.querySelector('#fermer2').onclick = ferme;
+  const r = feuille.querySelector('#reveler');
+  if(r) r.onclick = ()=>{ r.closest('.masque').outerHTML = `<div class="bio">${p.bio||""}</div>`; };
+  const va = feuille.querySelector('#voir-arbre');
+  if(va) va.onclick = ()=>{ ferme(); onglet('arbre'); centre(id); };
+}
+
+/* ====================== listes ====================== */
+const q = document.getElementById('q');
+function listes(){
+  const f = (q.value||"").trim().toLowerCase();
+  const tous = Object.values(P).filter(p=>visible(p))
+    .filter(p=> !f || p.n.toLowerCase().includes(f) || (p.e||"").toLowerCase().includes(f) || (p.dr||"").toLowerCase().includes(f));
+  const groupes = {};
+  tous.forEach(p=>{ const g = p.h||"—"; (groupes[g] = groupes[g]||[]).push(p); });
+  const ordre = ["Targaryen","Velaryon","Baratheon","Hightower","Arryn","Rogare"];
+  const cles = Object.keys(groupes).sort((a,b)=>{
+    const ia=ordre.indexOf(a), ib=ordre.indexOf(b);
+    return (ia<0?99:ia)-(ib<0?99:ib) || a.localeCompare(b);
+  });
+  document.getElementById('liste').innerHTML = cles.map(k=>{
+    const l = groupes[k].sort((a,b)=>(a.b??999)-(b.b??999));
+    return `<div class="sect">${k==="—"?"Autres":"Maison "+k} · ${l.length}</div>` + l.map(p=>`
+      <button class="ligne" data-go="${p.id}">
+        <span class="av${p.k?' roi':''}">${p.k?'♛':(p.dr?'🜂':(p.s==='f'?'♀':'♂'))}</span>
+        <span class="t"><b>${p.n}</b><span>${p.e?'« '+p.e+' »':(p.dr?(p.s==='f'?'Cavalière de ':'Cavalier de ')+p.dr:(p.k?(p.s==='f'?'Reine':'Roi'):''))}</span></span>
+        <span class="an">${dates(p)}</span>
+      </button>`).join('');
+  }).join('') || `<p style="color:var(--enc2)">Personne de ce nom.</p>`;
+  document.querySelectorAll('#liste [data-go]').forEach(b=> b.onclick = ()=>ouvre(b.dataset.go));
+}
+q.addEventListener('input', listes);
+
+function chrono(){
+  const evs = EVENTS.filter(e=>e[0] <= S.limite);
+  document.getElementById('rois').innerHTML = `
+    <div class="sect">Les rois du Trône de Fer</div>
+    ${REGNES.filter(r=>P[r[0]] && visible(P[r[0]])).map(r=>`
+      <button class="ligne" data-go="${r[0]}">
+        <span class="av roi">♛</span>
+        <span class="t"><b>${r[1]}</b><span>${P[r[0]].e?'« '+P[r[0]].e+' »':''}</span></span>
+        <span class="an">${r[2]}</span>
+      </button>`).join('')}
+    <div class="sect">Chronologie</div>
+    <div class="chrono">${evs.map(e=>`
+      <div class="ev${e[2]?' roi':''}"><div class="y">${e[0]<0?Math.abs(e[0])+" av. C.":e[0]+" ap. C."}</div>
+      <div class="d">${e[1]}</div></div>`).join('')}</div>
+    ${S.limite<999?`<p class="note">Le reste de la chronologie est masqué : tu peux changer ton avancée dans le livre depuis les Réglages.</p>`:''}`;
+  document.querySelectorAll('#rois [data-go]').forEach(b=> b.onclick = ()=>ouvre(b.dataset.go));
+}
+
+function reglages(){
+  document.getElementById('reglages').innerHTML = `
+    <div class="sect">Lecture</div>
+    <div class="opt"><div class="t"><b>Où en es-tu dans le livre ?</b><span>Masque ce qui n'est pas encore arrivé</span></div>
+      <select id="s-limite">${JALONS.map(j=>`<option value="${j[0]}"${S.limite===j[0]?' selected':''}>${j[1]}</option>`).join('')}</select></div>
+    <div class="opt"><div class="t"><b>Taille du texte</b></div>
+      <div class="seg" id="s-fs">${[[0.9,"A"],[1,"A"],[1.15,"A"],[1.3,"A"]].map((o,i)=>
+        `<button data-fs="${o[0]}" class="${S.fs===o[0]?'on':''}" style="font-size:${0.7+i*0.13}rem">${o[1]}</button>`).join('')}</div></div>
+    <div class="opt"><div class="t"><b>Apparence</b></div>
+      <div class="seg" id="s-theme">
+        <button data-th="jour" class="${S.theme==='jour'?'on':''}">Parchemin</button>
+        <button data-th="nuit" class="${S.theme==='nuit'?'on':''}">Nuit</button></div></div>
+    <div class="sect">À propos</div>
+    <p class="note">Arbre généalogique de la maison Targaryen tel que raconté dans <i>Feu &amp; Sang</i>, de la Conquête d'Aegon à l'avènement d'Aegon III.
+    Touche un nom pour ouvrir sa fiche : dates, dragon, camp pendant la Danse, parents, conjoints, enfants.
+    Dans l'arbre, la personne choisie reste éclairée avec toute sa lignée — pince pour zoomer, glisse pour te déplacer.</p>
+    <p class="note">Application hors ligne : aucune donnée n'est envoyée nulle part. Ajoute-la à ton écran d'accueil pour l'ouvrir comme une vraie appli.
+    Elle se met à jour toute seule à l'ouverture, dès qu'une nouvelle version est en ligne.</p>
+    <div class="opt"><div class="t"><b>Version ${VERSION_APP}</b><span id="maj-etat">Mise à jour automatique activée</span></div>
+      <div class="seg"><button id="btn-maj">Vérifier</button></div></div>`;
+  const bm = document.getElementById('btn-maj');
+  if(bm) bm.onclick = async ()=>{
+    const e = document.getElementById('maj-etat');
+    e.textContent = "Recherche…";
+    try{
+      const r = await fetch('index.html?v='+Date.now(), {cache:'no-store'});
+      const t = await r.text();
+      const m = t.match(/VERSION_APP\s*=\s*"([^"]+)"/);
+      if(m && m[1] !== VERSION_APP){ e.textContent = "Nouvelle version, rechargement…"; setTimeout(()=>location.reload(true), 600); }
+      else e.textContent = "Tu as déjà la dernière version.";
+    }catch(err){ e.textContent = "Hors ligne — impossible de vérifier."; }
+  };
+  document.getElementById('s-limite').onchange = e=>{
+    S.limite = +e.target.value; localStorage.setItem('tg-limite', S.limite);
+    dessine(); listes(); chrono();
+  };
+  document.querySelectorAll('#s-fs button').forEach(b=> b.onclick = ()=>{
+    S.fs = +b.dataset.fs; localStorage.setItem('tg-fs', S.fs);
+    document.documentElement.style.setProperty('--fs', S.fs); reglages();
+  });
+  document.querySelectorAll('#s-theme button').forEach(b=> b.onclick = ()=>{
+    S.theme = b.dataset.th; localStorage.setItem('tg-theme', S.theme);
+    document.documentElement.dataset.theme = S.theme;
+    document.querySelector('meta[name=theme-color]').content = S.theme==='nuit'?'#12100e':'#e6d9be';
+    reglages();
+  });
+}
+
+/* ====================== barre de filtres & navigation ====================== */
+const MODES = [["tous","Tout l'arbre"],["rois","Les rois"],["dragons","Cavaliers de dragon"],["danse","La Danse : Noirs / Verts"]];
+function barre(){
+  document.getElementById('barre').innerHTML = MODES.map(m=>
+    `<button class="puce ${S.mode===m[0]?'on':''}" data-m="${m[0]}">${m[1]}</button>`).join('');
+  document.querySelectorAll('#barre .puce').forEach(b=> b.onclick = ()=>{
+    S.mode = b.dataset.m; S.sel = null;
+    document.body.classList.toggle('faction', S.mode==='danse');
+    barre(); dessine(); legende();
+  });
+}
+function legende(){
+  const l = document.getElementById('legende');
+  if(S.mode==='danse') l.innerHTML = `<b>Noirs</b> : Rhaenyra · <b>Verts</b> : Aegon II<br>Contour doré = a régné`;
+  else if(S.mode==='dragons') l.innerHTML = `🜂 = a monté un dragon`;
+  else if(S.mode==='rois') l.innerHTML = `♛ = a porté la couronne`;
+  else l.innerHTML = `Touche un nom pour sa fiche.<br>Pince pour zoomer.`;
+}
+function onglet(v){
+  document.querySelectorAll('.vue').forEach(s=> s.classList.toggle('on', s.id==='v-'+v));
+  document.querySelectorAll('nav button').forEach(b=> b.classList.toggle('on', b.dataset.v===v));
+  if(v==='liste') setTimeout(()=>q.focus(),80);
+}
+document.querySelectorAll('nav button').forEach(b=> b.onclick = ()=>onglet(b.dataset.v));
+document.getElementById('btn-cherche').onclick = ()=>onglet('liste');
+
+/* ====================== démarrage ====================== */
+document.documentElement.dataset.theme = S.theme;
+document.documentElement.style.setProperty('--fs', S.fs);
+document.querySelector('meta[name=theme-color]').content = S.theme==='nuit'?'#12100e':'#e6d9be';
+barre(); legende(); dessine(); listes(); chrono(); reglages();
+addEventListener('resize', ()=>ajuste());
+ajuste();
+/* ---- mise à jour automatique ----
+   Le service worker va chercher la dernière version sur le réseau à chaque ouverture.
+   Dès qu'une nouvelle version prend la main, la page se recharge toute seule. */
+if('serviceWorker' in navigator){
+  let recharge = false;
+  navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+    if(recharge) return; recharge = true; location.reload();
+  });
+  addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      reg.update().catch(()=>{});
+      // on revérifie à chaque retour dans l'app, et une fois par heure
+      addEventListener('visibilitychange', ()=>{ if(!document.hidden) reg.update().catch(()=>{}); });
+      setInterval(()=> reg.update().catch(()=>{}), 3600e3);
+    }).catch(()=>{});
+  });
+}
+</script>
