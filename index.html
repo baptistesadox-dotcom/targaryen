@@ -8,11 +8,12 @@
 :root{
   --pap:#f0e6d2; --pap2:#e6d9be; --card:#f7efdf; --enc:#2b2117; --enc2:#6d5c46;
   --or:#9a6b1f; --rouge:#8c1c13; --ligne:#a8967a; --ombre:rgba(60,42,20,.18);
-  --fs:1;
+  --mer:#bfced6; --fs:1;
 }
 [data-theme=nuit]{
   --pap:#12100e; --pap2:#1a1613; --card:#1f1a15; --enc:#ece2d0; --enc2:#a2907a;
   --or:#c9a227; --rouge:#c1352a; --ligne:#5a4c3b; --ombre:rgba(0,0,0,.5);
+  --mer:#0d161b;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden}
@@ -49,8 +50,30 @@ nav button.on{color:var(--rouge)}
 /* ---------- arbre ---------- */
 #zone{position:absolute;inset:0;overflow:hidden;touch-action:none;background:
   radial-gradient(120% 90% at 50% 0%, var(--pap) 40%, var(--pap2) 100%)}
-#pan{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
-#svg{display:block}
+#zoneC{position:absolute;inset:0;overflow:hidden;touch-action:none;background:var(--mer)}
+#pan,#panC{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+#svg,#svgc{display:block}
+
+/* ---------- carte ---------- */
+#svgc text{pointer-events:none}
+.reg{stroke:var(--enc);stroke-width:1;stroke-opacity:.3;transition:fill .3s}
+.cz{cursor:pointer}
+.cote{fill:none;stroke:var(--enc);stroke-width:2.4;stroke-opacity:.7}
+.regnom{font-size:15px;font-weight:600;fill:var(--enc);letter-spacing:.1em;text-anchor:middle;opacity:.85;
+  text-transform:uppercase}
+.regnom.clair{fill:#f2e8d5}
+.regmaison{font-size:10px;fill:var(--enc);text-anchor:middle;opacity:.6;letter-spacing:.06em}
+.regmaison.clair{fill:#f2e8d5;opacity:.75}
+.mur{stroke:#e8f1f5;stroke-width:6;stroke-linecap:round}
+.murb{stroke:var(--enc);stroke-width:8.5;stroke-linecap:round;stroke-opacity:.55}
+.murnom{font-size:9px;fill:var(--enc);text-anchor:middle;letter-spacing:.22em;opacity:.8}
+.pt{fill:var(--card);stroke:var(--enc);stroke-width:1.6}
+.ptnom{font-size:10.5px;font-weight:600;fill:var(--enc);text-anchor:middle}
+.ptmaison{font-size:8.5px;fill:var(--enc2);text-anchor:middle;letter-spacing:.05em}
+.bat{fill:var(--rouge);stroke:#f2e8d5;stroke-width:1.4}
+.batnom{font-size:10px;font-weight:600;fill:var(--enc);text-anchor:middle}
+.batan{font-size:8.5px;fill:var(--rouge);text-anchor:middle;letter-spacing:.06em}
+[data-theme=nuit] #svgc .reg{filter:brightness(.5) saturate(.75)}
 .lien{fill:none;stroke:var(--ligne);stroke-width:1.6}
 .lien.mar{stroke:var(--enc2);stroke-width:1.8}
 .lien.hi{stroke:var(--rouge);stroke-width:2.6}
@@ -74,13 +97,18 @@ body.faction .nd.fv rect{stroke:#1f5c33;fill:#dfe8d4}
   box-shadow:0 2px 6px var(--ombre);display:grid;place-items:center;font-size:1.05rem}
 #aide{position:absolute;left:50%;top:3.2rem;transform:translateX(-50%);z-index:6;max-width:82vw;
   background:var(--enc);color:var(--pap);border-radius:10px;padding:.6rem .85rem;font-size:.82rem;
-  box-shadow:0 4px 14px var(--ombre);text-align:center;line-height:1.4;transition:opacity .4s}
+  box-shadow:0 4px 14px var(--ombre);text-align:center;line-height:1.4;transition:opacity .4s;
+  pointer-events:none}   /* ne doit jamais bloquer un toucher sur les nœuds du haut de l'arbre */
 #aide.parti{opacity:0;pointer-events:none}
 .legende{position:absolute;left:.6rem;bottom:.7rem;z-index:3;background:var(--card);border:1px solid var(--ligne);
-  border-radius:6px;padding:.4rem .55rem;font-size:.68rem;color:var(--enc2);box-shadow:0 2px 6px var(--ombre);max-width:52vw}
+  border-radius:6px;padding:.4rem .55rem;font-size:.68rem;color:var(--enc2);box-shadow:0 2px 6px var(--ombre);
+  max-width:52vw;pointer-events:none}
 .legende b{color:var(--enc);font-weight:600}
+/* la barre et la légende flottent au-dessus du dessin : elles ne doivent pas
+   avaler les touchers destinés à l'arbre ou à la carte, seulement leurs boutons */
 .barre{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;gap:.35rem;padding:.4rem .5rem;
-  background:linear-gradient(var(--pap2),transparent);overflow-x:auto;scrollbar-width:none}
+  background:linear-gradient(var(--pap2),transparent);overflow-x:auto;scrollbar-width:none;pointer-events:none}
+.barre .puce{pointer-events:auto}
 .barre::-webkit-scrollbar{display:none}
 .puce{white-space:nowrap;border:1px solid var(--ligne);background:var(--card);border-radius:999px;
   padding:.22rem .6rem;font-size:.72rem;color:var(--enc2)}
@@ -172,6 +200,17 @@ select{font:inherit;font-size:.85rem;padding:.4rem;border:1px solid var(--ligne)
       </div>
     </section>
 
+    <section class="vue" id="v-carte">
+      <div id="zoneC"><div id="panC"><svg id="svgc" xmlns="http://www.w3.org/2000/svg" width="600" height="1000" viewBox="0 0 600 1000"></svg></div></div>
+      <div class="barre" id="barreC"></div>
+      <div class="legende" id="legendeC"></div>
+      <div class="ctrl">
+        <button id="zc-plus">+</button>
+        <button id="zc-moins">−</button>
+        <button id="zc-fit" aria-label="Toute la carte">⤢</button>
+      </div>
+    </section>
+
     <section class="vue" id="v-liste"><div class="wrap">
       <div class="chercher"><input id="q" type="search" placeholder="Chercher un nom…" autocomplete="off"></div>
       <div id="liste"></div>
@@ -184,6 +223,7 @@ select{font:inherit;font-size:.85rem;padding:.4rem;border:1px solid var(--ligne)
 
   <nav>
     <button class="on" data-v="arbre"><i>⛬</i>Arbre</button>
+    <button data-v="carte"><i>⛰</i>Carte</button>
     <button data-v="liste"><i>☰</i>Personnes</button>
     <button data-v="rois"><i>♛</i>Chronologie</button>
     <button data-v="reglages"><i>⚙</i>Réglages</button>
@@ -198,7 +238,7 @@ select{font:inherit;font-size:.85rem;padding:.4rem;border:1px solid var(--ligne)
    n:nom  e:épithète  s:sexe  b:naissance  d:mort  r:rangée dans l'arbre
    h:maison  k:[n° de roi, règne]  dr:dragon  f:camp pendant la Danse
    ====================================================================== */
-const VERSION_APP = "2026.08.17-4";
+const VERSION_APP = "2026.08.17-5";
 const GENS = [
 ["aerion",{n:"Aerion Targaryen",t:"Seigneur de Peyredragon",s:"m",b:null,d:null,r:0,h:"Targaryen",
   bio:"Seigneur de Peyredragon avant la Conquête. Père d'Aegon, de Visenya et de Rhaenys, il mourut sans jamais avoir régné sur autre chose que son rocher."}],
@@ -617,76 +657,93 @@ function marque(id, sens, ens){
   suite.forEach(x=>{ if(!ens.has(x)){ ens.add(x); marque(x, sens, ens); } });
 }
 
-/* ====================== zoom / déplacement ====================== */
-const zone = document.getElementById('zone'), pan = document.getElementById('pan');
-let vue = {x:0, y:0, k:1};
-const applique = ()=> pan.style.transform = `translate(${vue.x}px,${vue.y}px) scale(${vue.k})`;
-function ajuste(anim, brut){
-  const r = zone.getBoundingClientRect();
-  const kf = Math.min(r.width/DIM.w, r.height/DIM.h) * 0.96;
-  const k = brut ? kf : Math.max(kf, 0.45);          // au démarrage, jamais illisible
-  if(k > kf + 0.001){                                 // l'arbre déborde : on se pose en haut, sur Aegon
-    vue = {k, x: r.width/2 - CX('aegon-i')*k, y: 40};
-  } else {
-    vue = {k, x:(r.width-DIM.w*k)/2, y:(r.height-DIM.h*k)/2 + 8};
-  }
-  if(anim){ pan.style.transition='transform .25s'; setTimeout(()=>pan.style.transition='',260); }
-  applique();
-}
-function centre(id){
-  if(!inTree(id)) return;
-  const r = zone.getBoundingClientRect();
-  vue.k = Math.max(vue.k, 0.85);
-  vue.x = r.width/2 - CX(id)*vue.k;
-  vue.y = r.height/2 - (Y(id)+NH/2)*vue.k;
-  pan.style.transition='transform .3s'; applique(); setTimeout(()=>pan.style.transition='',320);
-}
-function zoom(f, cx, cy){
-  const r = zone.getBoundingClientRect();
-  cx = cx==null ? r.width/2 : cx; cy = cy==null ? r.height/2 : cy;
-  const k2 = Math.min(3, Math.max(0.12, vue.k*f));
-  vue.x = cx - (cx-vue.x)*(k2/vue.k); vue.y = cy - (cy-vue.y)*(k2/vue.k); vue.k = k2;
-  applique();
-}
-let ptrs = new Map(), dep = null, bouge = 0;
-zone.addEventListener('pointerdown', e=>{
-  zone.setPointerCapture(e.pointerId);
-  ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
-  bouge = 0;
-  if(ptrs.size===1) dep = {x:e.clientX-vue.x, y:e.clientY-vue.y};
-  if(ptrs.size===2) dep = null;
-});
-zone.addEventListener('pointermove', e=>{
-  if(!ptrs.has(e.pointerId)) return;
-  const av = ptrs.get(e.pointerId);
-  bouge += Math.abs(e.clientX-av.x)+Math.abs(e.clientY-av.y);
-  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(ptrs.size===1 && dep){ vue.x = e.clientX-dep.x; vue.y = e.clientY-dep.y; applique(); }
-  else if(ptrs.size===2){
-    const [a,b] = [...ptrs.values()];
-    const d = Math.hypot(a.x-b.x, a.y-b.y);
-    if(zone._d){
-      const r = zone.getBoundingClientRect();
-      zoom(d/zone._d, (a.x+b.x)/2 - r.left, (a.y+b.y)/2 - r.top);
+/* ====================== zoom / déplacement (partagé par l'arbre et la carte) ====================== */
+function panZoom(o){
+  const zone = o.zone, pan = o.pan, v = {x:0, y:0, k:1};
+  const applique = ()=> pan.style.transform = `translate(${v.x}px,${v.y}px) scale(${v.k})`;
+  const glisse = ms => { pan.style.transition='transform .28s'; setTimeout(()=>pan.style.transition='', ms||300); };
+  function ajuste(anim, brut){
+    const d = o.dim(), r = zone.getBoundingClientRect();
+    if(!r.width) return;
+    const kf = Math.min(r.width/d.w, r.height/d.h) * 0.96;
+    v.k = brut ? kf : Math.max(kf, o.kmin || kf);
+    if(v.k > kf + 0.001 && o.ancre){        // le dessin déborde : on se pose en haut, sur un repère
+      const a = o.ancre();
+      v.x = r.width/2 - a[0]*v.k; v.y = 40 - a[1]*v.k;
+    } else {
+      v.x = (r.width - d.w*v.k)/2; v.y = (r.height - d.h*v.k)/2 + 8;
     }
-    zone._d = d;
+    if(anim) glisse();
+    applique();
   }
-});
-['pointerup','pointercancel'].forEach(ev=> zone.addEventListener(ev, e=>{
-  ptrs.delete(e.pointerId);
-  if(ptrs.size<2) zone._d = null;
-  if(ptrs.size===0 && bouge < 8){
-    const g = e.target.closest('.nd');
-    if(g) ouvre(g.dataset.id);
+  function centreSur(x, y, kmin){
+    const r = zone.getBoundingClientRect();
+    v.k = Math.max(v.k, kmin||0.85);
+    v.x = r.width/2 - x*v.k; v.y = r.height/2 - y*v.k;
+    glisse(); applique();
   }
-}));
-zone.addEventListener('wheel', e=>{ e.preventDefault();
-  const r = zone.getBoundingClientRect();
-  zoom(e.deltaY<0?1.12:0.89, e.clientX-r.left, e.clientY-r.top);
-},{passive:false});
-document.getElementById('z-plus').onclick = ()=>zoom(1.25);
-document.getElementById('z-moins').onclick = ()=>zoom(0.8);
-document.getElementById('z-fit').onclick = ()=>{ S.sel=null; dessine(); ajuste(true, true); };
+  function zoom(f, cx, cy){
+    const r = zone.getBoundingClientRect();
+    cx = cx==null ? r.width/2 : cx; cy = cy==null ? r.height/2 : cy;
+    const k2 = Math.min(4, Math.max(0.1, v.k*f));
+    v.x = cx - (cx-v.x)*(k2/v.k); v.y = cy - (cy-v.y)*(k2/v.k); v.k = k2;
+    applique();
+  }
+  const ptrs = new Map();
+  let dep = null, bouge = 0, cible = null, ecart = null;
+  zone.addEventListener('pointerdown', e=>{
+    // la capture du pointeur redirige le pointerup vers la zone : on retient la cible ici
+    cible = e.target.closest ? e.target.closest(o.sel) : null;
+    try{ zone.setPointerCapture(e.pointerId); }catch(err){}
+    ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    bouge = 0;
+    dep = ptrs.size===1 ? {x:e.clientX-v.x, y:e.clientY-v.y} : null;
+  });
+  zone.addEventListener('pointermove', e=>{
+    if(!ptrs.has(e.pointerId)) return;
+    const av = ptrs.get(e.pointerId);
+    bouge += Math.abs(e.clientX-av.x)+Math.abs(e.clientY-av.y);
+    ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(ptrs.size===1 && dep){ v.x = e.clientX-dep.x; v.y = e.clientY-dep.y; applique(); }
+    else if(ptrs.size===2){
+      const [a,b] = [...ptrs.values()];
+      const d = Math.hypot(a.x-b.x, a.y-b.y);
+      if(ecart){
+        const r = zone.getBoundingClientRect();
+        zoom(d/ecart, (a.x+b.x)/2 - r.left, (a.y+b.y)/2 - r.top);
+      }
+      ecart = d;
+    }
+  });
+  ['pointerup','pointercancel'].forEach(ev=> zone.addEventListener(ev, e=>{
+    ptrs.delete(e.pointerId);
+    if(ptrs.size<2) ecart = null;
+    if(ptrs.size===0){
+      if(bouge < 8){
+        const sous = document.elementFromPoint(e.clientX, e.clientY);
+        const g = (sous && sous.closest && sous.closest(o.sel)) || cible;
+        if(g) o.tap(g);
+      }
+      cible = null;
+    }
+  }));
+  zone.addEventListener('wheel', e=>{ e.preventDefault();
+    const r = zone.getBoundingClientRect();
+    zoom(e.deltaY<0 ? 1.12 : 0.89, e.clientX-r.left, e.clientY-r.top);
+  }, {passive:false});
+  return {v, ajuste, zoom, centreSur};
+}
+
+const zone = document.getElementById('zone'), pan = document.getElementById('pan');
+const ARBRE = panZoom({zone, pan, sel:'.nd', kmin:0.45,
+  dim: ()=>DIM,
+  ancre: ()=>[CX('aegon-i'), 0],
+  tap: g=> { if(g.dataset.id) ouvre(g.dataset.id); }});
+const ajuste = (anim, brut)=> ARBRE.ajuste(anim, brut);
+const centre = id=> { if(inTree(id)) ARBRE.centreSur(CX(id), Y(id)+NH/2, 0.9); };
+document.getElementById('z-plus').onclick = ()=>ARBRE.zoom(1.25);
+document.getElementById('z-moins').onclick = ()=>ARBRE.zoom(0.8);
+document.getElementById('z-fit').onclick = ()=>{ S.sel=null; dessine(); ARBRE.ajuste(true, true); };
 
 /* ====================== fiche ====================== */
 const fiche = document.getElementById('fiche'), feuille = document.getElementById('feuille');
@@ -817,7 +874,7 @@ function reglages(){
   };
   document.getElementById('s-limite').onchange = e=>{
     S.limite = +e.target.value; localStorage.setItem('tg-limite', S.limite);
-    dessine(); listes(); chrono();
+    dessine(); listes(); chrono(); barreC(); carte();
   };
   document.querySelectorAll('#s-fs button').forEach(b=> b.onclick = ()=>{
     S.fs = +b.dataset.fs; localStorage.setItem('tg-fs', S.fs);
@@ -830,6 +887,236 @@ function reglages(){
     reglages();
   });
 }
+
+/* ======================================================================
+   CARTE DE WESTEROS — tracé original, dessiné pour cette app.
+   Les contours sont volontairement schématiques : ce qui compte ici, c'est
+   de pouvoir allumer une couche (maisons, camps de la Danse, batailles).
+   ====================================================================== */
+const COTE = [[150,45],[112,100],[136,150],[108,202],[124,258],[100,312],[142,356],[112,402],[168,446],
+ [150,492],[196,520],[168,560],[132,592],[150,640],[182,676],[146,716],[128,772],[162,826],[212,866],
+ [258,900],[316,938],[382,954],[446,946],[508,910],[524,862],[486,826],[508,782],[472,742],[496,698],
+ [452,656],[478,620],[426,606],[464,574],[494,542],[526,500],[492,452],[420,428],[414,396],[458,348],
+ [472,296],[448,240],[466,186],[432,140],[452,92],[390,48],[270,38]];
+
+const REGIONS = [
+ {id:"audela", n:"Au-delà du Mur", lab:[268,96], c:"#b9c3c9", danse:"x",
+  pp:[[[150,45],[112,100],[136,150],[230,146],[330,143],[432,140],[452,92],[390,48],[270,38]]],
+  sous:"hors des Sept Couronnes",
+  txt:"Les terres de l'Éternel Hiver, que nul roi n'a jamais tenues. La reine Alysanne y vola sur Aile-d'Argent et obtint pour la Garde de Nuit le don du Neuf-Sentinelles.",
+  gens:["alysanne","jaehaerys-i"]},
+
+ {id:"nord", n:"Le Nord", lab:[286,258], c:"#e7edf0", danse:"n", maison:"Stark", siege:"Winterfell",
+  pp:[[[136,150],[108,202],[124,258],[100,312],[142,356],[112,402],[168,446],[248,464],[306,474],[352,442],
+      [414,396],[458,348],[472,296],[448,240],[466,186],[432,140],[330,143],[230,146]]],
+  txt:"Cregan Stark tint le Nord pour Rhaenyra et scella avec Jacaerys le Pacte de Glace et de Feu. Ses hommes arrivèrent trop tard pour la bataille, mais à temps pour les têtes : l'Heure du Loup.",
+  gens:["jacaerys","aegon-iii"]},
+
+ {id:"conflans", n:"Le Conflans", lab:[266,536], c:"#9fb8d4", danse:"d", maison:"Tully", siege:"Vivesaigues",
+  pp:[[[168,446],[150,492],[196,520],[232,558],[300,592],[352,598],[368,548],[356,492],[348,452],[306,474],[248,464]]],
+  txt:"Coupé en deux : les Blackwood pour Rhaenyra, les Bracken pour Aegon. Daemon y prit Harrenhal sans un coup, et le ciel de l'Œil-des-Dieux vit s'entretuer deux dragons.",
+  gens:["daemon","aemond"]},
+
+ {id:"val", n:"Le Val", lab:[452,480], c:"#bcd2e0", danse:"n", maison:"Arryn", siege:"Les Eyrié",
+  pp:[[[348,452],[420,428],[492,452],[526,500],[494,542],[446,562],[392,545],[368,548],[356,492]]],
+  txt:"Jeyne Arryn, la Vierge du Val, se rangea derrière Rhaenyra — comme le Val l'avait fait pour sa grand-mère Rhaenys, la reine qui ne fut jamais.",
+  gens:["rhaenyra","rhaenys-tp"]},
+
+ {id:"ouest", n:"L'Ouest", lab:[188,614], c:"#c98b84", danse:"v", maison:"Lannister", siege:"Castral Roc",
+  pp:[[[196,520],[168,560],[132,592],[150,640],[182,676],[226,656],[252,610],[262,570],[232,558]]],
+  txt:"Jason Lannister leva l'Ouest pour Aegon II et mourut au gué de la Fourche Rouge. Ses côtes furent ensuite mises à feu par le Kraken Rouge.",
+  gens:["aegon-ii"]},
+
+ {id:"couronne", n:"La Couronne", lab:[398,584], c:"#d9c98a", danse:"v", maison:"Targaryen", siege:"Port-Réal",
+  pp:[[[352,598],[368,548],[392,545],[446,562],[464,574],[426,606],[452,640],[420,662],[372,646]]],
+  txt:"Aegon II fut couronné en hâte dans la Fosse aux dragons. Rhaenyra prit la ville, puis la ville se retourna contre elle : la foule massacra les dragons enchaînés.",
+  gens:["aegon-ii","rhaenyra","helaena"]},
+
+ {id:"orage", n:"Les Terres de l'Orage", nc:"L'Orage", lab:[448,712], c:"#ddc271", danse:"v", maison:"Baratheon", siege:"Accalmie",
+  pp:[[[452,656],[496,698],[472,742],[508,782],[486,826],[440,800],[398,754],[398,706],[420,662]]],
+  txt:"Borros Baratheon, courtisé par les deux camps, choisit Aegon. Lucerys, venu porter le message de sa mère, mourut dans la tempête en repartant.",
+  gens:["lucerys","aemond","boremund"]},
+
+ {id:"bief", n:"Le Bief", lab:[262,752], c:"#a9c48f", danse:"v", maison:"Tyrell", siege:"Hautjardin",
+  pp:[[[182,676],[146,716],[128,772],[162,826],[212,866],[258,900],[302,862],[344,806],[386,758],[398,706],
+      [372,646],[306,604],[254,606],[226,656]]],
+  txt:"Villevieille leva le Bief pour Aegon sous Ormund Hightower, mais plusieurs maisons tinrent pour Rhaenyra : la région fut ravagée d'un bout à l'autre.",
+  gens:["alicent","daeron"]},
+
+ {id:"dorne", n:"Dorne", lab:[398,884], c:"#dfa878", danse:"x", maison:"Martell", siege:"Lancehélion",
+  pp:[[[258,900],[316,938],[382,954],[446,946],[508,910],[524,862],[486,826],[440,800],[386,792],[344,806],[302,862]]],
+  txt:"La seule couronne qu'Aegon le Conquérant n'ait jamais prise : Meraxes et Rhaenys y tombèrent. Dorne resta hors de la Danse.",
+  gens:["rhaenys","aegon-i","visenya"]},
+
+ {id:"ilesdefer", n:"Îles de Fer", lab:[74,516], c:"#9aa4ab", danse:"n", maison:"Greyjoy", siege:"Pyk",
+  pp:[[[96,462],[122,452],[134,474],[110,488]],[[80,498],[104,492],[112,514],[86,520]],[[114,506],[134,500],[140,520],[118,526]]],
+  txt:"Dalton Greyjoy, le Kraken Rouge, se déclara pour Rhaenyra à dix-huit ans — surtout pour le pillage. Ses drakkars ruinèrent l'Ouest sans que les Noirs aient à lever un homme.",
+  gens:["rhaenyra"]},
+
+ {id:"peyredragon", n:"Peyredragon", lab:[512,660], pt:true, c:"#8c6b8f", danse:"n", maison:"Targaryen", siege:"Peyredragon",
+  pp:[[[476,622],[494,624],[498,644],[478,644]]],
+  txt:"Le siège ancestral, la Montagne et les œufs de dragon. Rhaenyra y fut couronnée par Daemon, et c'est là qu'elle mourut, livrée à son demi-frère et dévorée par Feusolaire.",
+  gens:["rhaenyra","daemon","aegon-iii","baela"]},
+
+ {id:"lamarck", n:"Lamarck", lab:[548,596], pt:true, c:"#7c96a8", danse:"n", maison:"Velaryon", siege:"Lamarck",
+  pp:[[[500,594],[522,598],[524,614],[502,612]]],
+  txt:"La flotte du Serpent de mer : la puissance navale des Noirs, et l'or de neuf grands voyages.",
+  gens:["corlys","rhaenys-tp","alyn","laenor"]}
+];
+
+/* décor : îles sans fiche */
+const ILES_DECOR = [[[150,860],[176,854],[186,874],[158,882]], [[500,718],[516,714],[520,732],[502,734]]];
+
+const SIEGES = [
+ ["Châteaunoir","Garde de Nuit",300,150],["Winterfell","Stark",292,300],["Blancport","Manderly",408,392],
+ ["Les Eyrié","Arryn",432,494],["Vivesaigues","Tully",264,528],["Harrenhal","Strong",332,558],
+ ["Pyk","Greyjoy",106,478],["Castral Roc","Lannister",138,590],["Port-Réal","Trône de Fer",424,602],
+ ["Peyredragon","Targaryen",487,633],["Lamarck","Velaryon",512,604],["Accalmie","Baratheon",470,740],
+ ["Hautjardin","Tyrell",250,730],["Villevieille","Hightower",168,826],["Lancehélion","Martell",492,896]
+];
+
+const BATAILLES = [
+ {n:"Harrenhal",an:129,x:332,y:558,txt:"Daemon prend Harrenhal sans livrer bataille et en fait la base des Noirs dans le Conflans.",gens:["daemon"]},
+ {n:"Rougefort",an:129,x:452,y:634,txt:"Le piège de Criston Cole et d'Aemond. Rhaenys charge seule deux dragons : Meleys tombe, et Aegon II en sort brisé pour la vie.",gens:["rhaenys-tp","aemond","aegon-ii"]},
+ {n:"Le Vin-de-Miel",an:129,x:198,y:806,txt:"Ormund Hightower brise l'armée noire du Bief devant Villevieille ; Daeron et Tessarion emportent la décision.",gens:["daeron"]},
+ {n:"Le Gosier",an:130,x:518,y:668,txt:"La flotte triarque est anéantie dans le détroit, au prix de plusieurs dragons. Jacaerys y meurt avec Vermax.",gens:["jacaerys"]},
+ {n:"Cité-Bourg",an:130,x:356,y:678,txt:"La foule met en pièces le petit Maelor, deux ans, alors qu'on tentait de le mettre à l'abri.",gens:["maelor"]},
+ {n:"L'Œil-des-Dieux",an:130,x:338,y:570,txt:"Daemon saute de Caraxès sur le dos de Vhagar. Lui et Aemond disparaissent ensemble dans le lac.",gens:["daemon","aemond"]},
+ {n:"Tumbleton",an:130,x:376,y:694,txt:"Deux chevaliers livrent la ville aux Verts, qui la pillent. Daeron y trouvera la mort.",gens:["daeron"]},
+ {n:"Port-Réal",an:130,x:424,y:602,txt:"L'Émeute de la Fosse : la ville prend les dragons d'assaut. Quatre sont massacrés, Joffrey y laisse la vie.",gens:["joffrey-v","helaena","rhaenyra"]},
+ {n:"Peyredragon",an:130,x:487,y:633,txt:"Baela et Danselune abattent Feusolaire. Rhaenyra, livrée à Aegon II, est dévorée sous les yeux de son fils.",gens:["baela","rhaenyra","aegon-ii"]}
+];
+
+const COUCHES = [["couronnes","Les Sept Couronnes"],["maisons","Les grandes maisons"],
+                 ["danse","La Danse : Noirs / Verts"],["batailles","Les batailles de la Danse"]];
+let SC = "couronnes";
+
+/* courbe lissée (Catmull-Rom → Bézier) : des côtes organiques à partir de peu de points */
+function courbe(p, ferme){
+  const n = p.length, at = i => p[(i%n+n)%n];
+  let d = `M${p[0][0]} ${p[0][1]}`;
+  for(let i=0; i<(ferme===false ? n-1 : n); i++){
+    const a=at(i-1), b=at(i), c=at(i+1), e=at(i+2);
+    d += ` C${(b[0]+(c[0]-a[0])/6).toFixed(1)} ${(b[1]+(c[1]-a[1])/6).toFixed(1)},`
+       + ` ${(c[0]-(e[0]-b[0])/6).toFixed(1)} ${(c[1]-(e[1]-b[1])/6).toFixed(1)},`
+       + ` ${c[0]} ${c[1]}`;
+  }
+  return d + (ferme===false ? "" : " Z");
+}
+
+const CAMPS = {n:"#33302b", v:"#3c6f4a", d:"url(#hachures)", x:"var(--pap2)"};
+const svgc = document.getElementById('svgc');
+
+function carte(){
+  const danseVisible = S.limite >= 129;
+  if((SC==='danse' || SC==='batailles') && !danseVisible) SC = 'couronnes';
+  let s = `<defs>
+    <pattern id="hachures" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#3c6f4a"/><rect width="4" height="8" fill="#33302b"/>
+    </pattern></defs>`;
+
+  s += `<path d="${courbe(COTE)}" fill="var(--pap2)"/>`;          // socle : masque les jointures
+
+  REGIONS.forEach(r=>{
+    const camp = CAMPS[r.danse || 'x'];
+    const fill = SC==='couronnes' ? r.c : (SC==='danse' ? camp : 'var(--pap2)');
+    const clair = SC==='danse' && (r.danse==='n' || r.danse==='v') ? ' clair' : '';
+    s += `<g class="cz" data-carte="reg:${r.id}">`
+      + r.pp.map(p=>`<path class="reg" d="${courbe(p)}" fill="${fill}"/>`).join('')
+      + (r.pt
+          ? `<text class="regmaison${clair}" x="${r.lab[0]}" y="${r.lab[1]}">${r.nc || r.n}</text>`
+          : `<text class="regnom${clair}" x="${r.lab[0]}" y="${r.lab[1]}">${r.nc || r.n}</text>`
+            + (SC==='maisons' && r.maison ? `<text class="regmaison" x="${r.lab[0]}" y="${r.lab[1]+14}">maison ${r.maison}</text>` : ''))
+      + `</g>`;
+  });
+
+  ILES_DECOR.forEach(p=> s += `<path class="reg" d="${courbe(p)}" fill="var(--pap2)"/>`);
+  s += `<path class="cote" d="${courbe(COTE)}"/>`;
+
+  // le Mur
+  s += `<path class="murb" d="M136 149 L432 141"/><path class="mur" d="M136 149 L432 141"/>
+        <text class="murnom" x="286" y="166">LE MUR</text>`;
+
+  if(SC==='maisons' || SC==='batailles'){
+    SIEGES.forEach(([n,m,x,y])=>{
+      s += `<circle class="pt" cx="${x}" cy="${y}" r="${SC==='maisons'?3.4:2.4}"/>`;
+      if(SC==='maisons')
+        s += `<text class="ptnom" x="${x}" y="${y-7}">${n}</text>`
+           + `<text class="ptmaison" x="${x}" y="${y+13}">${m}</text>`;
+    });
+  }
+  if(SC==='batailles'){
+    BATAILLES.filter(b=> b.an <= S.limite).forEach((b,i)=>{
+      const idx = BATAILLES.indexOf(b);
+      s += `<g class="cz" data-carte="bat:${idx}">
+        <circle class="bat" cx="${b.x}" cy="${b.y}" r="5.5"/>
+        <text class="batnom" x="${b.x}" y="${b.y-9}">${b.n}</text>
+        <text class="batan" x="${b.x}" y="${b.y+15}">${b.an} ap. C.</text></g>`;
+    });
+  }
+  svgc.innerHTML = s;
+  legendeC();
+}
+
+function legendeC(){
+  const l = document.getElementById('legendeC');
+  if(SC==='danse') l.innerHTML = `<b>Noirs</b> : Rhaenyra · <b>Verts</b> : Aegon II<br>Hachuré = région divisée · clair = resté à l'écart`;
+  else if(SC==='maisons') l.innerHTML = `Les sièges des grandes maisons.<br>Touche une région pour sa fiche.`;
+  else if(SC==='batailles') l.innerHTML = `Les batailles de la Danse des Dragons.<br>Touche un point rouge.`;
+  else l.innerHTML = `Touche une région : qui la tient, et son rôle dans le livre.`;
+}
+
+function barreC(){
+  const dispo = COUCHES.filter(c=> S.limite >= 129 || (c[0]!=='danse' && c[0]!=='batailles'));
+  document.getElementById('barreC').innerHTML = dispo.map(c=>
+    `<button class="puce ${SC===c[0]?'on':''}" data-c="${c[0]}">${c[1]}</button>`).join('');
+  document.querySelectorAll('#barreC .puce').forEach(b=> b.onclick = ()=>{
+    SC = b.dataset.c; barreC(); carte();
+  });
+}
+
+/* fiche d'une région ou d'une bataille, dans la même feuille que les personnages */
+function ouvreCarte(quoi, ref){
+  let titre, sous, tags = [], txt, gens = [];
+  if(quoi==='reg'){
+    const r = REGIONS.find(x=>x.id===ref); if(!r) return;
+    titre = r.n;
+    sous = r.maison ? `Maison ${r.maison} · ${r.siege}` : r.sous;
+    if(S.limite >= 129 && r.danse)
+      tags.push({n:{t:"Camp des Noirs",c:""},v:{t:"Camp des Verts",c:""},d:{t:"Région divisée",c:""},x:{t:"Resté à l'écart",c:""}}[r.danse].t);
+    txt = r.txt; gens = r.gens || [];
+  } else {
+    const b = BATAILLES[+ref]; if(!b) return;
+    titre = b.n; sous = `Bataille de ${b.an} ap. C.`;
+    tags.push("La Danse des Dragons");
+    txt = b.txt; gens = b.gens || [];
+  }
+  const chips = gens.filter(g=>P[g] && visible(P[g])).map(g=>{
+    const q = P[g];
+    return `<button class="chip${q.k?' roi':''}" data-go="${g}">${q.k?'♛ ':''}${nomCourt(q)} <small>${dates(q)}</small></button>`;
+  }).join('');
+  feuille.innerHTML = `
+    <div class="poignee"></div>
+    <div class="fh"><h2>${titre}</h2><button class="x" id="x-fiche">✕</button></div>
+    ${sous?`<div class="epi">${sous}</div>`:""}
+    <div class="meta">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+    <div class="bio">${txt}</div>
+    ${chips?`<div class="rel"><h4>À lire aussi</h4><div class="chips">${chips}</div></div>`:""}
+    <div class="act"><button class="sec" id="fermer2">Fermer</button></div>`;
+  feuille.scrollTop = 0;
+  fiche.classList.add('on');
+  feuille.querySelectorAll('[data-go]').forEach(b=> b.onclick = ()=>ouvre(b.dataset.go));
+  feuille.querySelector('#x-fiche').onclick = ferme;
+  feuille.querySelector('#fermer2').onclick = ferme;
+}
+
+const zoneC = document.getElementById('zoneC'), panC = document.getElementById('panC');
+const CARTE = panZoom({zone:zoneC, pan:panC, sel:'.cz',
+  dim: ()=>({w:600, h:1000}),
+  tap: g=>{ const [q,r] = g.dataset.carte.split(':'); ouvreCarte(q, r); }});
+document.getElementById('zc-plus').onclick = ()=>CARTE.zoom(1.25);
+document.getElementById('zc-moins').onclick = ()=>CARTE.zoom(0.8);
+document.getElementById('zc-fit').onclick = ()=>CARTE.ajuste(true, true);
 
 /* ====================== barre de filtres & navigation ====================== */
 const MODES = [["tous","Tout l'arbre"],["rois","Les rois"],["dragons","Cavaliers de dragon"],["danse","La Danse : Noirs / Verts"]];
@@ -853,6 +1140,7 @@ function onglet(v){
   document.querySelectorAll('.vue').forEach(s=> s.classList.toggle('on', s.id==='v-'+v));
   document.querySelectorAll('nav button').forEach(b=> b.classList.toggle('on', b.dataset.v===v));
   if(v==='liste') setTimeout(()=>q.focus(),80);
+  if(v==='carte') setTimeout(()=>CARTE.ajuste(), 30);   // la zone n'a une taille qu'une fois affichée
 }
 document.querySelectorAll('nav button').forEach(b=> b.onclick = ()=>onglet(b.dataset.v));
 document.getElementById('btn-cherche').onclick = ()=>onglet('liste');
@@ -861,7 +1149,7 @@ document.getElementById('btn-cherche').onclick = ()=>onglet('liste');
 document.documentElement.dataset.theme = S.theme;
 document.documentElement.style.setProperty('--fs', S.fs);
 document.querySelector('meta[name=theme-color]').content = S.theme==='nuit'?'#12100e':'#e6d9be';
-barre(); legende(); dessine(); listes(); chrono(); reglages();
+barre(); legende(); dessine(); listes(); chrono(); reglages(); barreC(); carte();
 
 /* bulle d'aide au tout premier lancement */
 if(!localStorage.getItem('tg-vu')){
@@ -870,11 +1158,10 @@ if(!localStorage.getItem('tg-vu')){
   a.innerHTML = "Glisse pour te promener dans l'arbre, pince pour zoomer.<br>Touche un nom : sa fiche s'ouvre et sa lignée s'éclaire.";
   document.getElementById('v-arbre').appendChild(a);
   const partir = ()=>{ a.classList.add('parti'); localStorage.setItem('tg-vu','1'); setTimeout(()=>a.remove(),500); };
-  a.onclick = partir;
   zone.addEventListener('pointerdown', partir, {once:true});
   setTimeout(partir, 9000);
 }
-addEventListener('resize', ()=>ajuste());
+addEventListener('resize', ()=>{ ajuste(); CARTE.ajuste(); });
 ajuste();
 /* ---- mise à jour automatique ----
    Deux filets : le service worker (network-first, se recharge quand une nouvelle version

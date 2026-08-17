@@ -9,6 +9,11 @@ PWA hors ligne, sans serveur ni compte : tout tient dans `index.html`.
 
 - **Arbre** zoomable (pince / glisse). Toucher un nom l'éclaire avec toute sa lignée, ancêtres et descendants.
 - Filtres : les rois, les cavaliers de dragon, les camps de la Danse des Dragons (Noirs / Verts).
+- **Carte** de Westeros, tracé original en SVG (aucune image reprise ailleurs) : côtes lissées par
+  courbes de Catmull-Rom à partir d'une quarantaine de points. Quatre couches à allumer — les Sept
+  Couronnes, les sièges des grandes maisons, les allégeances de la Danse (Noirs / Verts / divisé /
+  à l'écart), et les neuf batailles. Toucher une région ou une bataille ouvre sa fiche, qui renvoie
+  aux personnages concernés.
 - **Fiches** : dates, dragon, camp, parents, conjoints, enfants, frères et demi-frères — tout est cliquable.
 - **Personnes** : recherche et liste par maison.
 - **Chronologie** : les huit règnes et les grands événements.
